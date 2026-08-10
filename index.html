@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="icon" href="favicon.ico" type="image/x-icon">
+	<title>NDS TTS 텍스트 리더</title>
+	<link rel="stylesheet" href="font/bootstrap-icons.css">
+	<link rel="stylesheet" href="DynamicRGB_NDS.css">
+	<link rel="stylesheet" href="style.css">
+
+	<!-- 한글/워드/ODT/PDF 파서 외부 라이브러리 연동 -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body class="theme-white">
+
+	<!-- 좌측 사이드바 (독립형 카드 레이아웃) -->
+	<div id="sidebar" class="app-card">			
+		<!-- 상단 타이틀 (두꺼운 전용 서체) -->
+		<div class="brand-header">
+			<!-- 무지개 로고 컨테이너 -->
+			<div class="brand-logo-wrapper">
+				<div class="brand-logo-rgb-glow"></div>
+				<span class="brand-logo2"></span>
+			</div>
+			<div class="brand-text">
+				<span class="brand-sub" data-i18n="brand.sub">NDS</span>
+				<h4 class="brand-title notice-text rainbow-text" data-i18n="brand.title">TEXT to Speech</h4>
+			</div>
+		</div><!-- 상단 타이틀 END -->
+
+		<!-- 책장 영역 -->
+		<div class="sidebar-header">
+			<div class="sidebar-header-row">
+				<h3 data-i18n="sidebar.myLibrary">내 책장</h3>
+				<!-- 책장 닫기 전용 아이콘 토글 버튼 -->
+				<button id="btn-close-sidebar" class="icon-toggle-btn" data-i18n-title="sidebar.closeSidebar"><i class="bi-layout-sidebar"></i></button>
+			</div>
+			<div class="library-io-buttons">
+				<button id="btn-upload-trigger" data-i18n="sidebar.addBook" data-i18n-title="sidebar.addBookTt"><i class="bi-plus-lg"></i> 도서 등록 </button>
+				<button id="btn-create-series" data-i18n="sidebar.createSeries" data-i18n-title="sidebar.createSeriesTt" style="background-color: #33cc00;" onmouseover="this.style.backgroundColor='#28a400';" onmouseout="this.style.backgroundColor='#33cc00';"><i class="bi-folder-plus"></i> 시리즈 생성 </button>
+				<input type="file" id="file-uploader" accept=".txt,.docx,.odt,.hwpx,.pdf,.jpg,.jpeg,.png,.webp,.gif" style="display: none;" multiple>
+			</div>
+
+			<!-- 백업 / 복원 버튼 -->
+			<div class="library-io-buttons">
+				<button id="btn-export-library" data-i18n="sidebar.saveLibrary" data-i18n-title="sidebar.saveLibraryTt"><i class="bi-download"></i> 책장 저장 </button>
+				<button id="btn-import-trigger" data-i18n="sidebar.loadLibrary" data-i18n-title="sidebar.loadLibraryTt"><i class="bi-upload"></i> 책장 불러오기 </button>
+				<input type="file" id="library-importer" accept=".json" style="display: none;">
+			</div>
+			<!-- 책장 전체 비우기 버튼 -->
+			<div class="library-io-buttons" style="margin-top: 4px;">
+				<button id="btn-clear-library" data-i18n="sidebar.clearLibrary" data-i18n-title="sidebar.clearLibraryTt" style="background-color: #ff3366; color: #ffffff !important; width: 100%;" onmouseover="this.style.backgroundColor='#990033';" onmouseout="this.style.backgroundColor='#ff3366';"><i class="bi-trash"></i> 책장 전체 비우기</button>
+			</div>
+		</div><!-- 책장 영역 END -->
+
+		<!-- 책 리스트 영역 -->
+		<div class="book-list" id="book-list-element"></div>
+
+		<!-- 맨 하단 고정 제어판 (순서 사양 반영: 테마변경 / 설정 / 도움말 / 개발자) -->
+		<div class="footer-btn-grid">
+			<button id="btn-quick-theme" class="flat-footer-btn" data-i18n-title="footer.themeChangeTt"><i class="bi-palette"></i> <span data-i18n="footer.themeChange">테마변경</span></button>
+			<button id="btn-toggle-settings" class="flat-footer-btn" data-i18n-title="footer.settingsTt"><i class="bi-sliders"></i> <span data-i18n="footer.settings">설정</span></button>
+			<button id="btn-help" class="flat-footer-btn" data-i18n-title="footer.helpTt"><i class="bi-journals"></i> <span data-i18n="footer.help">도움말</span></button>
+			<button id="btn-developer" class="flat-footer-btn" data-i18n-title="footer.developerTt"><i class="bi-info-square"></i> <span data-i18n="footer.developer">개발자</span></button>
+		</div>
+
+	</div><!-- 좌측 사이드바 END -->
+
+	<!-- 우측 메인 영역 -->
+	<div id="main-area">
+		<!-- 플로팅 책장 열기 아이콘 -->
+		<button id="btn-floating-toggle" class="floating-toggle-btn" data-i18n-title="sidebar.openSidebar"><i class="bi-layout-sidebar"></i></button>
+
+		<!-- 상단 정보 탭 -->
+		<div id="reader-controls" class="app-card">
+			<div class="media-controls-wrap">
+				<button id="btn-play" title="듣기 시작"><i class="bi-play-fill"></i> <span data-i18n="player.play">재생하기</span></button>
+				<button id="btn-pause" title="일시정지"><i class="bi-pause-fill"></i> <span data-i18n="player.pause">일시정지</span></button>
+				<button id="btn-stop" class="active" title="읽기 중지 및 처음으로"><i class="bi-stop-fill"></i> <span data-i18n="player.stop">정 지</span></button>
+				<!-- 신규 추가된 녹음 버튼 -->
+				<button id="btn-record" class="btn-record-toggle" title="음성 녹음 및 MP3 저장"><i class="bi-record-circle-fill" style="color: #ff3366;"></i> <span data-i18n="player.record">녹 음</span></button>
+			</div>
+
+			<!-- 시리즈 연속재생 체크박스 -->
+			<div class="ctrl-group" style="border-left: 1px dashed var(--border-color); padding-left: 12px;">
+				<label style="display: flex; align-items: center; gap: 4px; cursor: pointer; font-size: 11px;">
+					<input type="checkbox" id="chk-series-autoplay"> <span data-i18n="player.seriesAutoplay">시리즈 연속재생</span>
+				</label>
+			</div>
+
+			<!-- TTS 속도 제어 -->
+			<div class="ctrl-group" style="border-left: 1px dashed var(--border-color); padding-left: 12px;">
+				<label for="range-rate" data-i18n="player.speed">속도</label>
+				<input type="range" id="range-rate" min="0.5" max="2" step="0.1" value="1">
+			</div>
+
+			<!-- 북마크 수동 조작 영역 -->
+			<div class="ctrl-group bookmark-group">
+				<button id="btn-add-bookmark" title="현재 읽고 있는 위치를 저장합니다."><i class="bi-bookmark-plus-fill"></i> <span data-i18n="player.addBookmark">북마크 추가</span></button>
+				<select id="select-bookmarks">
+					<option value="" data-i18n="player.bookmarkList">📖 북마크 목록</option>
+				</select>
+			</div>
+		</div><!-- 상단 정보 탭 END -->
+
+		<!-- 본문 텍스트뷰어 -->
+		<div id="reader-content" class="app-card">
+			<p class="empty-message">
+				<i class="bi-book"></i> &nbsp;NDS TEXT to Speech &nbsp;<i class="bi-book"></i> <br>
+				<img src="NDS_TEXT_to_Speech.nds" width="60%" border="0" alt=""><br>
+				<span data-i18n="player.emptyViewerMessage">책장에서 소설을 선택하세요.</span><br>
+			</p>
+		</div>
+
+		<!-- 하단 제어 탭 (이퀄라이저 & 페이징) -->
+		<div class="pager app-card" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; padding: 6px 15px; gap: 15px; height: 38px;">
+			<!-- 볼륨 슬라이더 및 이퀄라이저 -->
+			<div style="display: flex; align-items: center; gap: 10px; height: 100%;">
+				<div class="ctrl-group" style="flex-shrink: 0; display: flex; align-items: center; gap: 4px;">
+					<label for="range-volume" style="font-size: 11px; display: flex; align-items: center; gap: 3px; white-space: nowrap; margin: 0;">
+						<i id="icon-volume" class="bi-volume-up-fill" style="font-size: 13px;"></i>
+					</label>
+					<input type="range" id="range-volume" min="0" max="1" step="0.1" value="0.8" style="width: 50px; cursor: pointer; height: 4px;">
+				</div>
+				<!-- 이퀄라이저 하우징 (90px 슬림 콤팩트 사이즈로 반응 속도 및 파동 밀도 향상) -->
+				<div id="eq-housing" style="width: 90px; flex: 0 0 90px; display: flex; align-items: center; height: 22px; position: relative; border: 1px solid var(--border-color); border-radius: 6px; padding: 2px 4px; background-color: #99cedb; box-shadow: inset 0 1px 3px rgba(0,0,0,0.06); overflow: hidden;">
+					<canvas id="visualizer-canvas" style="width: 100%; height: 100%; display: block;"></canvas>
+				</div>
+			</div>
+
+			<!-- 페이징 제어 -->
+			<div style="display: flex; align-items: center; justify-content: space-between; flex: 1; gap: 10px; height: 100%;">
+				<button id="btn-prev-page" style="padding: 4px 8px; font-size: 11px;" data-i18n="player.prevPage">이전 장</button>
+				<span id="page-indicator" style="font-size: 12px; font-weight: bold; white-space: nowrap;">0 / 0</span>
+				<button id="btn-next-page" style="padding: 4px 8px; font-size: 11px;" data-i18n="player.nextPage">다음 장</button>
+			</div>
+		</div><!-- 하단 제어 탭 END -->
+	</div><!-- 우측 메인 영역 END -->
+
+	<!-- 1. [독립 레이아웃] 종합 환경설정 모달 창 -->
+	<div id="settings-modal" class="modal-overlay">
+		<div class="modal-content settings-modal-content">
+			<h3 data-i18n="settings.title">환경설정</h3>
+			<div class="settings-modal-grid">
+				
+				<!-- 1. 폰트 설정 섹션 -->
+				<div class="settings-section-card">
+					<div class="section-label" data-i18n="settings.fontGroup">폰트</div>
+					<div class="drawer-group">
+						<label for="select-font-family" data-i18n="settings.fontFamily">폰트설정</label>
+						<select id="select-font-family">
+							<option value="system-ui, sans-serif" data-i18n="settings.fontSystem">시스템 기본</option>
+							<option value="'Malgun Gothic', '맑은 고딕', sans-serif" data-i18n="settings.fontMalgun">맑은 고딕</option>
+							<option value="'Nanum Gothic', '나눔고딕', sans-serif" data-i18n="settings.fontNanumGothic">나눔고딕</option>
+							<option value="'Nanum Myeongjo', '나눔명조', serif" data-i18n="settings.fontNanumMyeongjo">나눔명조</option>
+							<option value="'Batang', '바탕', serif" data-i18n="settings.fontBatang">바탕체</option>
+							<option value="'Dotum', '돋움', sans-serif" data-i18n="settings.fontDotum">돋움체</option>
+							<option value="'Gungsuh', '궁서', serif" data-i18n="settings.fontGungsuh">궁서체</option>
+							<option value="'Gulim', '굴림', sans-serif" data-i18n="settings.fontGulim">굴림체</option>
+							<option value="custom" data-i18n="settings.fontCustom">직접 입력...</option>
+						</select>
+						<input type="text" id="input-custom-font" data-i18n-placeholder="settings.customFontPlaceholder" placeholder="서체명 입력">
+					</div>
+					<div class="drawer-group">
+						<label for="select-font-size" data-i18n="settings.fontSize">글자크기</label>
+						<select id="select-font-size">
+							<option value="14px" data-i18n="settings.fontSizeSmall">작게</option>
+							<option value="18px" selected data-i18n="settings.fontSizeNormal">보통</option>
+							<option value="22px" data-i18n="settings.fontSizeLarge">크게</option>
+							<option value="26px" data-i18n="settings.fontSizeXLarge">아주크게</option>
+						</select>
+					</div>
+					<div class="drawer-group">
+						<label for="select-line-height" data-i18n="settings.lineHeight">줄간격</label>
+						<select id="select-line-height">
+							<option value="1.0" data-i18n="settings.lh10">1.0 배</option>
+							<option value="1.2" data-i18n="settings.lh12">1.2 배</option>
+							<option value="1.5" selected data-i18n="settings.lh15">1.5 배 (보통)</option>
+							<option value="2.0" data-i18n="settings.lh20">2.0 배</option>
+							<option value="2.5" data-i18n="settings.lh25">2.5 배</option>
+						</select>
+					</div>
+					<div class="drawer-group filter-column">
+						<label><input type="checkbox" id="chk-exclude-hanja"><span data-i18n="settings.excludeHanja">한자 제외</span></label>
+						<label><input type="checkbox" id="chk-exclude-english"><span data-i18n="settings.excludeEnglish">영문 제외</span></label>
+					</div>
+				</div>
+
+				<!-- 2. 이퀄라이저 설정 섹션 (스펙트럼 두께 범위 1~3 축소 조절) -->
+				<div class="settings-section-card">
+					<div class="section-label" data-i18n="settings.eqGroup">이퀄라이저</div>
+					<div class="drawer-group color-row">
+						<label for="input-eq-bgcolor" data-i18n="settings.eqBgColor">배경색</label>
+						<input type="color" id="input-eq-bgcolor" value="#99cedb">
+					</div>
+					<div class="drawer-group color-row">
+						<label for="input-eq-color" data-i18n="settings.eqSpectrumColor">스펙트럼색</label>
+						<input type="color" id="input-eq-color" value="#ff9933">
+					</div>
+					<div class="drawer-group">
+						<label for="range-eq-thickness" data-i18n="settings.eqThickness">스펙트럼 두께</label>
+						<input type="range" id="range-eq-thickness" min="1" max="3" step="0.5" value="1.5">
+					</div>
+					<div class="drawer-group">
+						<label for="range-eq-speed" data-i18n="settings.eqSpeed">스펙트럼 속도</label>
+						<input type="range" id="range-eq-speed" min="20" max="150" step="10" value="50">
+					</div>
+				</div>
+
+				<!-- 3. 테마 추가 (커스텀 테마) 섹션 -->
+				<div class="settings-section-card">
+					<div class="section-label" data-i18n="settings.themeAddGroup">테마추가</div>
+					<div class="drawer-group">
+						<label for="select-theme" data-i18n="settings.themeGroup">테마 선택</label>
+						<div style="display: flex; gap: 4px; align-items: center;">
+							<select id="select-theme" style="flex: 1;"></select>
+							<button id="btn-delete-theme" class="btn-theme-delete" style="display: none;" title="Delete Theme">&times;</button>
+						</div>
+					</div>
+					<div class="drawer-group">
+						<label for="input-theme-name" data-i18n="settings.themeName">테마이름</label>
+						<input type="text" id="input-theme-name" placeholder="나만의 테마">
+					</div>
+					<div class="drawer-group color-row">
+						<label for="input-theme-appbg" data-i18n="settings.appBgColor">바탕색</label>
+						<input type="color" id="input-theme-appbg" value="#f0f2f5">
+					</div>
+					<div class="drawer-group color-row">
+						<label for="input-theme-sidebg" data-i18n="settings.sidebarBgColor">좌측 사이드바</label>
+						<input type="color" id="input-theme-sidebg" value="#ffffff">
+					</div>
+					<div class="drawer-group color-row">
+						<label for="input-theme-cardbg" data-i18n="settings.cardBgColor">본문 카드색</label>
+						<input type="color" id="input-theme-cardbg" value="#ffffff">
+					</div>
+					<div class="drawer-group color-row">
+						<label for="input-theme-bordercolor" data-i18n="settings.borderColor">카드 라인색</label>
+						<input type="color" id="input-theme-bordercolor" value="#cbd5e1">
+					</div>
+					<div class="drawer-group color-row">
+						<label for="input-theme-highlightcolor" data-i18n="settings.paragraphColor">문단 강조색</label>
+						<input type="color" id="input-theme-highlightcolor" value="#ffeb3b">
+					</div>
+					<div class="drawer-group color-row">
+						<label for="input-theme-textcolor" data-i18n="settings.textColor">글자색</label>
+						<input type="color" id="input-theme-textcolor" value="#1a1a1a">
+					</div>
+					<button id="btn-register-theme" class="btn-theme-register" data-i18n="settings.registerTheme">등록</button>
+				</div>
+
+				<!-- 4. 목소리 선택 섹션 -->
+				<div class="settings-section-card">
+					<div class="section-label" data-i18n="settings.voiceGroup">목소리 선택</div>
+					<div class="drawer-group">
+						<label for="select-voice" data-i18n="player.voiceSelect">목소리 음성 모델</label>
+						<select id="select-voice" style="width:100%;"></select>
+						<span style="font-size:10px; color:gray; margin-top:4px;" data-i18n="settings.voiceBrowserInfo">(브라우저 별)</span>
+					</div>
+				</div>
+
+				<!-- 5. 언어 설정 섹션 -->
+				<div class="settings-section-card">
+					<div class="section-label" data-i18n="settings.langGroup">언어</div>
+					<div class="drawer-group">
+						<!-- I18nManager가 마스터 언어 리스트를 동적으로 자동 생성합니다 -->
+						<select id="select-language"></select>
+					</div>
+				</div>
+
+				<!-- 6. 바탕화면 월페이퍼 이미지 설정 섹션 -->
+				<div class="settings-section-card">
+					<div class="section-label" data-i18n="settings.wallpaperGroup">바탕화면 이미지</div>
+					<div class="drawer-group" style="gap:6px;">
+						<div style="display:flex; gap:4px;">
+							<button id="btn-select-wallpaper" class="btn-folder-set" style="flex:1;" data-i18n="settings.selectWallpaper">이미지 선택</button>
+							<button id="btn-remove-wallpaper" class="btn-theme-delete" style="width:auto; padding:0 8px; display:none;" data-i18n="settings.removeWallpaper">제거</button>
+						</div>
+						<input type="file" id="wallpaper-uploader" accept="image/*" style="display:none;">
+						<div id="wallpaper-status-display" class="folder-path-display">🖼️ 미설정</div>
+						<div class="drawer-group" style="margin-top:2px;">
+							<label for="range-wallpaper-opacity"><span data-i18n="settings.wallpaperOpacity">투명도</span>: <span id="val-wallpaper-opacity">100%</span></label>
+							<input type="range" id="range-wallpaper-opacity" min="0.1" max="1.0" step="0.05" value="1.0">
+						</div>
+					</div>
+				</div>
+
+			</div><!-- settings-modal-grid END -->
+			<div class="modal-footer">
+				<button id="btn-close-settings-modal" data-i18n="modal.close">닫기</button>
+			</div>
+		</div>
+	</div><!-- 설정 모달 창 END -->
+
+	<!-- 2. [독립 레이아웃] 반투명 모달 (도움말/버전정보용) -->
+	<div id="app-modal" class="modal-overlay">
+		<div class="modal-content">
+			<h3 id="modal-title">NDS TTS</h3>
+			<div id="modal-body">내용이 표시됩니다.</div>
+			<div class="modal-footer">
+				<button id="btn-close-modal" data-i18n="modal.close">닫기</button>
+			</div>
+		</div>
+	</div><!-- 앱 모달 END -->
+
+<!-- 의존성 순서에 따라 정밀 로드 -->
+<script src="NDS_Namespace.js"></script>
+<script src="NDS_I18nManager.js"></script>
+<script src="NDS_HelpManager.js"></script>
+<script src="NDS_Recorder.js"></script>
+<script src="NDS_DBManager.js"></script>
+<script src="NDS_TextProcessor.js"></script>
+<script src="NDS_TTSController.js"></script>
+<script src="NDS_ThemeManager.js"></script>
+<script src="NDS_App.js"></script>
+
+</body>
+</html>
