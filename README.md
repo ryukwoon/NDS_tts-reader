@@ -1,4 +1,4 @@
-# 📖 NDS TTS Text Reader v2.1
+# 📖 NDS TTS Text Reader v2.0.1
 
 **A Web Standard-Based, Standalone Client-Side e-Book & Real-Time TTS (Text-to-Speech) Reader**  
 An offline-optimized web application that allows you to load, visually read, listen to, and instantly extract audio to MP3 files from various novel documents in your local environment without any server installation.
