@@ -1,4 +1,4 @@
-// NDS_ThemeManager.js - 테마 관리 및 동적 사용자 테마/월페이퍼 매니저 (v1.41 글자 투명도 버그 수정)
+// NDS_ThemeManager.js - 테마 관리 및 동적 사용자 테마/월페이퍼 매니저 (v1.91 글자크기 적용 버그 수정)
 window.NDS_TTS = window.NDS_TTS || {};
 
 window.NDS_TTS.ThemeManager = class ThemeManager {
@@ -57,7 +57,7 @@ window.NDS_TTS.ThemeManager = class ThemeManager {
 		return themeId;
 	}
 
-	// 본문 바탕화면 월페이퍼 이미지 적용 (글자 투명도 영향 방지 CSS 변수 적용)
+	// 본문 바탕화면 월페이퍼 이미지 적용
 	applyWallpaper(dataUrl, opacity = 1.0) {
 		const contentEl = this.getContentEl();
 		if (!contentEl) return;
@@ -92,7 +92,9 @@ window.NDS_TTS.ThemeManager = class ThemeManager {
 		return this.customThemes;
 	}
 
+	// 본문 폰트 크기 조정 (CSS 변수 --font-size 전역 주입으로 즉시 반영)
 	setFontSize(size) {
+		document.documentElement.style.setProperty("--font-size", size);
 		const contentEl = this.getContentEl();
 		if (contentEl) {
 			contentEl.style.fontSize = size;

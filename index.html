@@ -125,7 +125,7 @@
 					</label>
 					<input type="range" id="range-volume" min="0" max="1" step="0.1" value="0.8" style="width: 50px; cursor: pointer; height: 4px;">
 				</div>
-				<!-- 이퀄라이저 하우징 (90px 슬림 콤팩트 사이즈로 반응 속도 및 파동 밀도 향상) -->
+				<!-- 이퀄라이저 하우징 (90px 슬림 콤팩트) -->
 				<div id="eq-housing" style="width: 90px; flex: 0 0 90px; display: flex; align-items: center; height: 22px; position: relative; border: 1px solid var(--border-color); border-radius: 6px; padding: 2px 4px; background-color: #99cedb; box-shadow: inset 0 1px 3px rgba(0,0,0,0.06); overflow: hidden;">
 					<canvas id="visualizer-canvas" style="width: 100%; height: 100%; display: block;"></canvas>
 				</div>
@@ -183,13 +183,15 @@
 							<option value="2.5" data-i18n="settings.lh25">2.5 배</option>
 						</select>
 					</div>
-					<div class="drawer-group filter-column">
+					<div class="drawer-group filter-column" style="flex-wrap: wrap; gap: 4px;">
 						<label><input type="checkbox" id="chk-exclude-hanja"><span data-i18n="settings.excludeHanja">한자 제외</span></label>
 						<label><input type="checkbox" id="chk-exclude-english"><span data-i18n="settings.excludeEnglish">영문 제외</span></label>
+						<!-- 신규 추가: 절 번호 음성 제외 옵션 -->
+						<label><input type="checkbox" id="chk-exclude-section-num" checked><span data-i18n="settings.excludeSectionNum">절 번호 음성 제외</span></label>
 					</div>
 				</div>
 
-				<!-- 2. 이퀄라이저 설정 섹션 (스펙트럼 두께 범위 1~3 축소 조절) -->
+				<!-- 2. 이퀄라이저 설정 섹션 -->
 				<div class="settings-section-card">
 					<div class="section-label" data-i18n="settings.eqGroup">이퀄라이저</div>
 					<div class="drawer-group color-row">
@@ -265,7 +267,6 @@
 				<div class="settings-section-card">
 					<div class="section-label" data-i18n="settings.langGroup">언어</div>
 					<div class="drawer-group">
-						<!-- I18nManager가 마스터 언어 리스트를 동적으로 자동 생성합니다 -->
 						<select id="select-language"></select>
 					</div>
 				</div>
