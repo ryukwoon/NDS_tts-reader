@@ -1,4 +1,4 @@
-// NDS_i18n_ko.js - 한국어 번역 리소스 파일 (v1.7 녹음 기능 도움말 반영)
+// NDS_i18n_ko.js - 한국어 번역 리소스 파일 (v2.1 장/절 포맷 다국어 수록)
 window.NDS_TTS = window.NDS_TTS || {};
 window.NDS_TTS.i18nData = window.NDS_TTS.i18nData || {};
 
@@ -56,6 +56,7 @@ window.NDS_TTS.i18nData.ko = {
 		customFontPlaceholder: "서체명(예: 나눔명조) 입력",
 		excludeHanja: "한자 제외",
 		excludeEnglish: "영문 제외",
+		excludeSectionNum: "절 번호 음성 제외",
 		eqGroup: "이퀄라이저",
 		eqBgColor: "배경색",
 		eqSpectrumColor: "스펙트럼색",
@@ -105,6 +106,8 @@ window.NDS_TTS.i18nData.ko = {
 		prevPage: "이전 장",
 		nextPage: "다음 장",
 		pageUnit: "장",
+		chapterSectionFormat: "{chapter}장 {section}절", // 👈 장/절 다국어 포맷
+		sectionFormat: "{section}절",
 		emptyViewerMessage: "책장에서 소설을 선택하세요.",
 		lastPageAlert: "도서의 마지막 장입니다.",
 		lastSeriesAlert: "시리즈 폴더 내 마지막 권의 마지막 장입니다.",
@@ -144,7 +147,7 @@ window.NDS_TTS.i18nData.ko = {
 				<hr style="border:none; border-top:1px dashed var(--border-color); margin:5px 0;">
 				<div style="background-color:rgba(128,128,128,0.08); padding:8px; border-radius:6px; font-size:11px; line-height:1.4;">
 					<span style="font-weight:bold; color:#3b82f6;">NDS TEXT to Speech Reader</span><br>
-					<span>현재 버전: {version} (실시간 음성 녹음 & MP3 추출 지원)</span><br>
+					<span>현재 버전: {version} (장/절 수치 다국어 완벽 연동판)</span><br>
 					<span style="color:gray;">© 2026 RyuKwoon. All rights reserved.</span>
 				</div>
 			</div>

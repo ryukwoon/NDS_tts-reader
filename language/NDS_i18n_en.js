@@ -1,4 +1,4 @@
-// NDS_i18n_en.js - 영어 번역 리소스 파일 (v1.7)
+// NDS_i18n_en.js - 영어 번역 리소스 파일 (v2.1 장/절 포맷 다국어 수록)
 window.NDS_TTS = window.NDS_TTS || {};
 window.NDS_TTS.i18nData = window.NDS_TTS.i18nData || {};
 
@@ -56,6 +56,7 @@ window.NDS_TTS.i18nData.en = {
 		customFontPlaceholder: "Enter font name (e.g. Arial)",
 		excludeHanja: "Exclude Hanja",
 		excludeEnglish: "Exclude English",
+		excludeSectionNum: "Exclude Section Numbers",
 		eqGroup: "Equalizer",
 		eqBgColor: "BG Color",
 		eqSpectrumColor: "Spectrum Color",
@@ -105,6 +106,8 @@ window.NDS_TTS.i18nData.en = {
 		prevPage: "Prev Page",
 		nextPage: "Next Page",
 		pageUnit: "Page",
+		chapterSectionFormat: "Ch.{chapter} Sec.{section}", // 👈 영문 장/절 포맷
+		sectionFormat: "Sec.{section}",
 		emptyViewerMessage: "Select a novel from the bookshelf.",
 		lastPageAlert: "This is the last page of the book.",
 		lastSeriesAlert: "Reached the end of the last book in this series.",
