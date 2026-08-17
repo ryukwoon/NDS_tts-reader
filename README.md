@@ -114,5 +114,5 @@ NDS_tts-reader/
 - **Repository:** GitHub Repository
 - **License:** Global OpenSource Edition
 
-© 2026 RyuKwoon. All rights reserved.
+© 2026 RyuKwoon. 
 This software is a standalone client-side open-source reading tool.
