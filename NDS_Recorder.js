@@ -1,11 +1,11 @@
-// NDS_Recorder.js - 실시간 탭 오디오 녹음 전용 매니저 (v1.61 팝업 1회 동의 후 재사용 세션 보완)
+// NDS_Recorder.js - 실시간 탭 오디오 녹음 전용 매니저 (v2.11 볼륨 스파이크 및 AGC 튐 버그 수정)
 window.NDS_TTS = window.NDS_TTS || {};
 
 window.NDS_TTS.Recorder = class Recorder {
 	constructor(i18nManager) {
 		this.i18n = i18nManager;
 		this.mediaRecorder = null;
-		this.audioStream = null; // 오디오 스트림 메모리 보존
+		this.audioStream = null;
 		this.recordedChunks = [];
 		this.isRecording = false;
 		this.isPaused = false;
@@ -24,9 +24,12 @@ window.NDS_TTS.Recorder = class Recorder {
 		// 2. 권한이 없는 첫 1회 실행 시만 브라우저 팝업창 호출
 		try {
 			this.audioStream = await navigator.mediaDevices.getDisplayMedia({
-				video: true, // 탭 선택 팝업 출력을 위해 필수
+				video: true,
 				audio: {
-					suppressLocalAudioPlayback: false
+					suppressLocalAudioPlayback: false,
+					autoGainControl: false,   // 👈 브라우저 자동 볼륨 증폭(AGC) 차단 (볼륨 커짐/튀는 현상 원천 해결)
+					echoCancellation: false,  // 👈 에코 취소 끄기 (음질 원음 보존)
+					noiseSuppression: false   // 👈 노이즈 억제 끄기 (음성 찌그러짐 방지)
 				}
 			});
 
@@ -112,7 +115,6 @@ window.NDS_TTS.Recorder = class Recorder {
 		}
 		this.isRecording = false;
 		this.isPaused = false;
-		// note: stopStream()을 여기서 부르지 않고 오디오 스트림을 유지하여 다음 녹음 시 팝업을 띄우지 않음
 	}
 
 	// 완전히 세션을 종료하고 권한을 반납할 때 호출
