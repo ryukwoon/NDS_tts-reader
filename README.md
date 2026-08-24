@@ -114,5 +114,10 @@ NDS_tts-reader/
 - **Repository:** GitHub Repository
 - **License:** Global OpenSource Edition
 
+Hi! I'm **[RyuKwoon]**, an open-source developer.  
+Your sponsorship helps me keep my projects ad-free, open-source, and actively maintained. Thank you for your support! ☕
+
+[![Sponsor me on GitHub](https://img.shields.io/badge/Sponsor-%F0%9F%92%96-brightgreen?style=for-the-badge)](https://github.com/sponsors/ryukwoon)
+
 © 2026 RyuKwoon. 
 This software is a standalone client-side open-source reading tool.
