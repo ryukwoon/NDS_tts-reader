@@ -1,4 +1,4 @@
-// NDS_i18n_ko.js - 한국어 번역 리소스 파일 (v2.1 장/절 포맷 다국어 수록)
+// NDS_i18n_ko.js - 한국어 번역 리소스 파일 (v2.31 마크다운 포맷팅 정정)
 window.NDS_TTS = window.NDS_TTS || {};
 window.NDS_TTS.i18nData = window.NDS_TTS.i18nData || {};
 
@@ -68,7 +68,8 @@ window.NDS_TTS.i18nData.ko = {
 		appBgColor: "바탕색",
 		sidebarBgColor: "좌측 사이드바",
 		cardBgColor: "본문 카드색",
-		paragraphColor: "문단색",
+		borderColor: "카드 라인색",
+		paragraphColor: "문단 강조색",
 		textColor: "글자색",
 		registerTheme: "등록",
 		deleteTheme: "삭제",
@@ -90,7 +91,21 @@ window.NDS_TTS.i18nData.ko = {
 		removeWallpaper: "제거",
 		wallpaperOpacity: "투명도",
 		wallpaperUnset: "미설정",
-		wallpaperSet: "🖼️ 배경 이미지 적용됨"
+		wallpaperSet: "🖼️ 배경 이미지 적용됨",
+		
+		bgmGroup: "🎵 MP3 배경음악 설정",
+		bgmAdd: "음악 추가",
+		bgmClearAll: "모두비우기",
+		bgmVolume: "배경음악 볼륨 (기본 20%)",
+		bgmNoTrack: "등록된 배경음악 없음",
+		bgmPlayingPrefix: "▶ 재생 중: ",
+		bgmPausedPrefix: "⏸️ 일시정지: ",
+		bgmPromptClearAll: "배경음악 플레이리스트를 전체 비우시겠습니까?",
+		bgmPromptNoTracks: "등록된 MP3 음악이 없습니다. 설정창에서 음악을 추가해 주세요.",
+		bgmSettingsTt: "MP3 배경음악 설정",
+		bgmToggleTt: "배경음악 재생/일시정지",
+		bgmShuffleTt: "랜덤 플레이",
+		bgmRepeatTt: "전체 반복"
 	},
 	player: {
 		play: "재생하기",
@@ -106,7 +121,7 @@ window.NDS_TTS.i18nData.ko = {
 		prevPage: "이전 장",
 		nextPage: "다음 장",
 		pageUnit: "장",
-		chapterSectionFormat: "{chapter}장 {section}절", // 👈 장/절 다국어 포맷
+		chapterSectionFormat: "{chapter}장 {section}절",
 		sectionFormat: "{section}절",
 		emptyViewerMessage: "책장에서 소설을 선택하세요.",
 		lastPageAlert: "도서의 마지막 장입니다.",
@@ -147,7 +162,7 @@ window.NDS_TTS.i18nData.ko = {
 				<hr style="border:none; border-top:1px dashed var(--border-color); margin:5px 0;">
 				<div style="background-color:rgba(128,128,128,0.08); padding:8px; border-radius:6px; font-size:11px; line-height:1.4;">
 					<span style="font-weight:bold; color:#3b82f6;">NDS TEXT to Speech Reader</span><br>
-					<span>현재 버전: {version} (장/절 수치 다국어 완벽 연동판)</span><br>
+					<span>현재 버전: {version} (MP3 배경음악 연동 탑재판)</span><br>
 					<span style="color:gray;">© 2026 RyuKwoon. All rights reserved.</span>
 				</div>
 			</div>

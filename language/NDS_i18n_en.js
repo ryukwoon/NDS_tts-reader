@@ -1,4 +1,4 @@
-// NDS_i18n_en.js - 영어 번역 리소스 파일 (v2.1 장/절 포맷 다국어 수록)
+// NDS_i18n_en.js - 영어 번역 리소스 파일 (v2.31 마크다운 포맷팅 정정)
 window.NDS_TTS = window.NDS_TTS || {};
 window.NDS_TTS.i18nData = window.NDS_TTS.i18nData || {};
 
@@ -68,7 +68,8 @@ window.NDS_TTS.i18nData.en = {
 		appBgColor: "App Background",
 		sidebarBgColor: "Sidebar Background",
 		cardBgColor: "Card Background",
-		paragraphColor: "Paragraph Color",
+		borderColor: "Card Line Color",
+		paragraphColor: "Highlight Color",
 		textColor: "Text Color",
 		registerTheme: "Save",
 		deleteTheme: "Delete",
@@ -90,7 +91,21 @@ window.NDS_TTS.i18nData.en = {
 		removeWallpaper: "Remove",
 		wallpaperOpacity: "Opacity",
 		wallpaperUnset: "None",
-		wallpaperSet: "🖼️ Wallpaper Applied"
+		wallpaperSet: "🖼️ Wallpaper Applied",
+
+		bgmGroup: "🎵 MP3 BGM Settings",
+		bgmAdd: "Add Music",
+		bgmClearAll: "Clear All",
+		bgmVolume: "BGM Volume (Default 20%)",
+		bgmNoTrack: "No background music",
+		bgmPlayingPrefix: "▶ Playing: ",
+		bgmPausedPrefix: "⏸️ Paused: ",
+		bgmPromptClearAll: "Are you sure you want to clear the entire playlist?",
+		bgmPromptNoTracks: "No MP3 music registered. Please add music in BGM settings.",
+		bgmSettingsTt: "MP3 BGM Settings",
+		bgmToggleTt: "Play/Pause BGM",
+		bgmShuffleTt: "Shuffle",
+		bgmRepeatTt: "Repeat All"
 	},
 	player: {
 		play: "Play",
@@ -106,7 +121,7 @@ window.NDS_TTS.i18nData.en = {
 		prevPage: "Prev Page",
 		nextPage: "Next Page",
 		pageUnit: "Page",
-		chapterSectionFormat: "Ch.{chapter} Sec.{section}", // 👈 영문 장/절 포맷
+		chapterSectionFormat: "Ch.{chapter} Sec.{section}",
 		sectionFormat: "Sec.{section}",
 		emptyViewerMessage: "Select a novel from the bookshelf.",
 		lastPageAlert: "This is the last page of the book.",
@@ -147,7 +162,7 @@ window.NDS_TTS.i18nData.en = {
 				<hr style="border:none; border-top:1px dashed var(--border-color); margin:5px 0;">
 				<div style="background-color:rgba(128,128,128,0.08); padding:8px; border-radius:6px; font-size:11px; line-height:1.4;">
 					<span style="font-weight:bold; color:#3b82f6;">NDS TEXT to Speech Reader</span><br>
-					<span>Version: {version} (Audio Recording & MP3 Export Edition)</span><br>
+					<span>Version: {version} (BGM Player & MP3 Export Edition)</span><br>
 					<span style="color:gray;">© 2026 RyuKwoon. All rights reserved.</span>
 				</div>
 			</div>
