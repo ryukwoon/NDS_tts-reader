@@ -396,16 +396,17 @@ body {
 	border-radius: inherit;
 }
 
-/* 본문 텍스트 전용 독립 스크롤 영역 (상위 font-size 상속) */
+/* 본문 텍스트 전용 독립 스크롤 영역 (좌측 여백 콤팩트 최적화) */
 .reader-scroll-area {
 	width: 100%;
 	height: 100%;
 	overflow-y: auto;
-	padding: 30px 8%;
+	padding: 25px 5% 25px 3%; /* 좌측 여백 축소로 자연스러운 배치 */
 	line-height: var(--line-height);
-	font-size: inherit; /* 상위 #reader-content 글자 크기 상속 */
+	font-size: inherit;
 	word-break: break-all;
 }
+
 .reader-paragraph {
     margin-bottom: 1.2em;
     text-align: justify;
@@ -517,14 +518,6 @@ body {
     padding: 10px;
     border-radius: 8px;
     border: 1px solid var(--border-color);
-}
-
-.section-label {
-    font-size: 12px;
-    font-weight: bold;
-    color: #ff9900;
-    border-bottom: 1px dashed var(--border-color);
-    padding-bottom: 4px;
 }
 
 .drawer-group {
@@ -745,17 +738,28 @@ body {
 	50% { opacity: 0.6; }
 	100% { opacity: 1; }
 }
+
 /* 장/절 문단 구분 행 레이아웃 */
 .reader-paragraph-row {
 	display: flex;
 	align-items: baseline;
-	gap: 12px;
+	gap: 8px; /* 여백 간격 8px 밀착 */
 	margin-bottom: 1.2em;
 }
 
-/* 좌측 절 번호 공간 (우측 정렬) */
+/* 설정 모달 전용 카드의 주제목 라벨 */
 .section-label {
-	width: 55px;
+	font-size: 12px;
+	font-weight: bold;
+	color: #ff9900;
+	border-bottom: 1px dashed var(--border-color);
+	padding-bottom: 4px;
+}
+
+/* 뷰어 본문 좌측 장/절 수치 표시 (독립 클래스 - 밑줄 완전 제거 및 밀착 정렬) */
+.reader-section-label {
+	width: auto;
+	min-width: 42px;
 	flex-shrink: 0;
 	text-align: right; /* 절 번호 우측 정렬 */
 	font-size: 0.72em;
@@ -764,6 +768,9 @@ body {
 	opacity: 0.65;
 	user-select: none;
 	letter-spacing: -0.5px;
+	border-bottom: none !important; /* 밑줄 완전 제거 */
+	padding: 0;
+	margin: 0;
 }
 
 /* 우측 실제 문단 내용 스페이스 */
@@ -774,4 +781,13 @@ body {
 
 .paragraph-content .reader-paragraph {
 	margin-bottom: 0;
+}
+/* BGM 제어 토글 버튼 활성화 상태 */
+.icon-toggle-btn.active {
+	background-color: rgba(59, 130, 246, 0.2) !important;
+	color: #3b82f6 !important;
+}
+
+#btn-bgm-toggle.active {
+	background-color: rgba(16, 185, 129, 0.2) !important;
 }

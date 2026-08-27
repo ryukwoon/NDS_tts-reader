@@ -1,10 +1,10 @@
-// NDS_App.js - 애플리케이션 진입점 및 전역 메인 컨트롤러 (v2.11 녹음 볼륨 튐 및 버퍼 딜레이 패치)
+// NDS_App.js - 애플리케이션 진입점 및 전역 메인 컨트롤러 (v2.31 포맷팅 및 버그 패치 적용)
 window.NDS_TTS = window.NDS_TTS || {};
 
 window.NDS_TTS.App = class App {
 	// 앱 중앙 버전 정보 정의
 	static get VERSION() {
-		return "v2.11"; // 버그 수정 버전 갱신 (v2.11)
+		return "v2.31"; // 버전 갱신 규칙 반영 (v2.31)
 	}
 
 	getVersion() {
@@ -18,6 +18,7 @@ window.NDS_TTS.App = class App {
 		this.i18n = new window.NDS_TTS.I18nManager();
 		this.helpManager = new window.NDS_TTS.HelpManager(this.i18n);
 		this.recorder = new window.NDS_TTS.Recorder(this.i18n);
+		this.bgmPlayer = new window.NDS_TTS.BgmPlayer(this.i18n);
 
 		this.currentBook = null;
 		this.pages = [];
@@ -294,7 +295,36 @@ window.NDS_TTS.App = class App {
 			e.currentTarget.blur();
 		});
 
-		// [수정] 오디오 버퍼 튐 현상을 만드는 alert()을 제거하여 원활한 녹음 구동
+		document.getElementById("btn-bgm-settings").addEventListener("click", () => {
+			document.getElementById("bgm-modal").style.display = "flex";
+		});
+		document.getElementById("btn-close-bgm-modal").addEventListener("click", () => {
+			document.getElementById("bgm-modal").style.display = "none";
+		});
+		document.getElementById("btn-bgm-toggle").addEventListener("click", () => {
+			this.bgmPlayer.togglePlay();
+		});
+
+		document.getElementById("btn-bgm-add").addEventListener("click", () => {
+			document.getElementById("bgm-file-uploader").click();
+		});
+		document.getElementById("bgm-file-uploader").addEventListener("change", (e) => {
+			this.bgmPlayer.addTracks(e.target.files);
+			e.target.value = "";
+		});
+		document.getElementById("btn-bgm-clear").addEventListener("click", () => {
+			this.bgmPlayer.clearPlaylist();
+		});
+		document.getElementById("btn-bgm-shuffle").addEventListener("click", () => {
+			this.bgmPlayer.toggleShuffle();
+		});
+		document.getElementById("btn-bgm-repeat").addEventListener("click", () => {
+			this.bgmPlayer.toggleRepeat();
+		});
+		document.getElementById("range-bgm-volume").addEventListener("input", (e) => {
+			this.bgmPlayer.setVolume(e.target.value);
+		});
+
 		document.getElementById("btn-record").addEventListener("click", async () => {
 			if (!this.recorder.isRecording) {
 				const bookTitle = this.currentBook ? this.currentBook.title.replace(/\.[^/.]+$/, "") : "tts_reading";
@@ -354,6 +384,8 @@ window.NDS_TTS.App = class App {
 				this.updatePaginationIndicator();
 				this.updatePlayerStateUI(this.ttsController.isPlaying ? 'play' : 'stop');
 				this.updateRecordButtonUI(this.recorder.isRecording);
+				this.bgmPlayer.updateCurrentTrackDisplay();
+				this.bgmPlayer.renderPlaylistUI();
 				this.initVoices();
 				this.reRenderOnFilterChange();
 			}
@@ -742,6 +774,92 @@ window.NDS_TTS.App = class App {
 		this.ttsController.isPlaying = true;
 		this.updatePlayerStateUI('play');
 		this.speakCurrentProgress();
+	}
+
+	renderViewer() {
+		const contentArea = document.getElementById("reader-content");
+		if (!this.pages[this.currentPageIndex]) return;
+
+		const rawText = this.pages[this.currentPageIndex];
+		const rawParagraphs = rawText.split(/\r?\n/);
+		
+		contentArea.innerHTML = "";
+		this.sentences = [];
+		let sentenceGlobalIdx = 0;
+
+		const scrollArea = document.createElement("div");
+		scrollArea.className = "reader-scroll-area";
+
+		let sectionCounter = 1;
+		const currentChapterNum = this.currentPageIndex + 1;
+
+		rawParagraphs.forEach(para => {
+			const isValidSectionText = /[\u4E00-\u9FFF\u3131-\u318D\uAC00-\uD7A3a-zA-Z0-9]/.test(para);
+
+			const rowEl = document.createElement("div");
+			rowEl.className = "reader-paragraph-row";
+
+			const labelEl = document.createElement("div");
+			labelEl.className = "reader-section-label";
+
+			if (isValidSectionText) {
+				const currentSec = sectionCounter++;
+				if (currentSec === 1) {
+					labelEl.textContent = this.i18n.t("player.chapterSectionFormat", {
+						chapter: currentChapterNum,
+						section: 1
+					});
+				} else {
+					labelEl.textContent = this.i18n.t("player.sectionFormat", {
+						section: currentSec
+					});
+				}
+			} else {
+				labelEl.textContent = "";
+			}
+
+			const paragraphWrap = document.createElement("div");
+			paragraphWrap.className = "paragraph-content";
+
+			const pEl = document.createElement("p");
+			pEl.className = "reader-paragraph";
+
+			if (para.trim() === "") {
+				pEl.innerHTML = "&nbsp;";
+			} else {
+				const paraSentences = window.NDS_TTS.TextProcessor.extractSentences(para);
+				let isFirstSentence = true;
+
+				paraSentences.forEach(sentence => {
+					const span = document.createElement("span");
+					span.className = "sentence";
+					const currentIdx = sentenceGlobalIdx++;
+					span.id = `s-${currentIdx}`;
+					span.textContent = sentence + " ";
+					span.onclick = () => this.jumpToSentence(currentIdx);
+					
+					pEl.appendChild(span);
+
+					this.sentences.push({
+						rawText: sentence,
+						sectionTag: (isValidSectionText && isFirstSentence && labelEl.textContent) ? labelEl.textContent : ""
+					});
+
+					isFirstSentence = false;
+				});
+			}
+
+			paragraphWrap.appendChild(pEl);
+			rowEl.appendChild(labelEl);
+			rowEl.appendChild(paragraphWrap);
+			scrollArea.appendChild(rowEl);
+		});
+
+		contentArea.appendChild(scrollArea);
+
+		this.updatePaginationIndicator();
+		this.ttsController.stop();
+		this.applySentenceHighlight(this.currentSentenceIndex);
 	}
 
 	speakCurrentProgress() {
@@ -1311,92 +1429,6 @@ window.NDS_TTS.App = class App {
 		this.loadBookShelf();
 	}
 
-	renderViewer() {
-		const contentArea = document.getElementById("reader-content");
-		if (!this.pages[this.currentPageIndex]) return;
-
-		const rawText = this.pages[this.currentPageIndex];
-		const rawParagraphs = rawText.split(/\r?\n/);
-		
-		contentArea.innerHTML = "";
-		this.sentences = [];
-		let sentenceGlobalIdx = 0;
-
-		const scrollArea = document.createElement("div");
-		scrollArea.className = "reader-scroll-area";
-
-		let sectionCounter = 1;
-		const currentChapterNum = this.currentPageIndex + 1;
-
-		rawParagraphs.forEach(para => {
-			const isValidSectionText = /[\u4E00-\u9FFF\u3131-\u318D\uAC00-\uD7A3a-zA-Z0-9]/.test(para);
-
-			const rowEl = document.createElement("div");
-			rowEl.className = "reader-paragraph-row";
-
-			const labelEl = document.createElement("div");
-			labelEl.className = "section-label";
-
-			if (isValidSectionText) {
-				const currentSec = sectionCounter++;
-				if (currentSec === 1) {
-					labelEl.textContent = this.i18n.t("player.chapterSectionFormat", {
-						chapter: currentChapterNum,
-						section: 1
-					});
-				} else {
-					labelEl.textContent = this.i18n.t("player.sectionFormat", {
-						section: currentSec
-					});
-				}
-			} else {
-				labelEl.textContent = "";
-			}
-
-			const paragraphWrap = document.createElement("div");
-			paragraphWrap.className = "paragraph-content";
-
-			const pEl = document.createElement("p");
-			pEl.className = "reader-paragraph";
-
-			if (para.trim() === "") {
-				pEl.innerHTML = "&nbsp;";
-			} else {
-				const paraSentences = window.NDS_TTS.TextProcessor.extractSentences(para);
-				let isFirstSentence = true;
-
-				paraSentences.forEach(sentence => {
-					const span = document.createElement("span");
-					span.className = "sentence";
-					const currentIdx = sentenceGlobalIdx++;
-					span.id = `s-${currentIdx}`;
-					span.textContent = sentence + " ";
-					span.onclick = () => this.jumpToSentence(currentIdx);
-					
-					pEl.appendChild(span);
-
-					this.sentences.push({
-						rawText: sentence,
-						sectionTag: (isValidSectionText && isFirstSentence && labelEl.textContent) ? labelEl.textContent : ""
-					});
-
-					isFirstSentence = false;
-				});
-			}
-
-			paragraphWrap.appendChild(pEl);
-			rowEl.appendChild(labelEl);
-			rowEl.appendChild(paragraphWrap);
-			scrollArea.appendChild(rowEl);
-		});
-
-		contentArea.appendChild(scrollArea);
-
-		this.updatePaginationIndicator();
-		this.ttsController.stop();
-		this.applySentenceHighlight(this.currentSentenceIndex);
-	}
-
 	updatePaginationIndicator() {
 		const indicator = document.getElementById("page-indicator");
 		const unitText = this.i18n.t("player.pageUnit");
@@ -1415,42 +1447,6 @@ window.NDS_TTS.App = class App {
 			activeSpan.classList.add("active");
 			activeSpan.scrollIntoView({ behavior: "smooth", block: "center" });
 		}
-	}
-
-	speakCurrentProgress() {
-		if (!this.ttsController.isPlaying) return;
-
-		if (this.currentSentenceIndex >= this.sentences.length) {
-			this.changePage(1, true);
-			return;
-		}
-
-		this.applySentenceHighlight(this.currentSentenceIndex);
-		this.saveState();
-
-		const sentenceObj = this.sentences[this.currentSentenceIndex];
-		const rawText = typeof sentenceObj === "object" ? sentenceObj.rawText : sentenceObj;
-		let textToSpeak = window.NDS_TTS.TextProcessor.filterText(rawText, this.excludeHanja, this.excludeEnglish);
-
-		if (!this.excludeSectionNum && typeof sentenceObj === "object" && sentenceObj.sectionTag) {
-			const isParagraphStart = (this.currentSentenceIndex === 0) || 
-				(typeof this.sentences[this.currentSentenceIndex - 1] === "object" && 
-				 this.sentences[this.currentSentenceIndex - 1].sectionTag !== sentenceObj.sectionTag);
-			if (isParagraphStart) {
-				textToSpeak = `${sentenceObj.sectionTag}. ${textToSpeak}`;
-			}
-		}
-
-		const selectedVoice = document.getElementById("select-voice").value;
-		const rate = parseFloat(document.getElementById("range-rate").value);
-		const volume = parseFloat(document.getElementById("range-volume").value);
-
-		this.ttsController.speak(textToSpeak, selectedVoice, rate, volume, () => {
-			if (this.ttsController.isPlaying) {
-				this.currentSentenceIndex++;
-				this.speakCurrentProgress();
-			}
-		});
 	}
 
 	jumpToSentence(index) {
