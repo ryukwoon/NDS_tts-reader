@@ -1,123 +1,102 @@
-# 📖 NDS TTS Text Reader v2.31
+# 📖 NDS TTS Text Reader
 
-**A Web Standard-Based, Standalone Client-Side e-Book & Real-Time TTS (Text-to-Speech) Reader**  
-An offline-optimized web application that allows you to load, visually read, listen to, and instantly extract audio to MP3 files from various novel documents in your local environment without any server installation.
-
----
-
-## 🌟 Project Overview
-
-**NDS TTS Text Reader** is a *Local-First* web reader designed so that personal reading data is never transmitted to external servers.  
-It supports multiple document formats (`.txt`, `.docx`, `.odt`, `.hwpx`, `.pdf`), providing advanced voice controls, verse/paragraph numbering (Chapter/Verse), real-time MP3 audio recording, custom wallpaper backgrounds, and a canvas visualizer equalizer.
+| 📱 Mobile Version | 🖥️ PC Version | 💖 Sponsor & Support |
+| :---: | :---: | :---: |
+| [**Go to Mobile Guide**](#-1-mobile-version-v35-overview) | [**Go to PC Guide**](#-2-pc-version-v30-full-feature-specifications) | [**Support Project**](#-3-sponsor--developer-info) |
 
 ---
 
-## ✨ Key Features
+## 📱 1. Mobile Version (v3.5) Overview
 
-### 1. 📚 Smart Book & Series Management
-- **Multi-Format Parsing:** Multi-registration support for TXT, Word (`.docx`), OpenDocument (`.odt`), Hangul (`.hwpx`), and PDF formats.
-- **Auto Cover Matching:** Uploading an image file (JPG, PNG, WEBP, etc.) with the same name as the document automatically assigns it as the cover art. You can also click on the cover to change it at any time.
-- **Series Folder Setup:** Create series structures to organize episodes/chapters and enable continuous playback across consecutive volumes when reaching the end of a book.
-- **Backup & Restore:** Safely export and import entire bookshelves and bookmark data as JSON files.
+### 📱 1. Complete Mobile-Centric UI/UX Redesign
+- **Top 3-Button Grid:** Redesigned into a touch-friendly top grid featuring three primary buttons: `[ 📂 Bookshelf ]` (JSON Import), `[ 📄 TXT File ]` (Direct Load), and `[ 🗑️ Clear All ]`.
+- **Bottom 3-Bar Footer Control:** Realigned the bottom footer toolbar to prioritize core actions: `[ Theme ]`, `[ Settings ]`, and `[ 📖 Reader View ]`.
 
-### 2. 🎧 Web Standard Web Speech API-Based TTS Player
-- **Precision Speech Control:** Supports Play, Pause, Stop, Speed adjustment (0.5x to 2.0x), and Volume control.
-- **Real-Time Highlighting & Click-to-Jump:** The active sentence being spoken auto-scrolls to the center of the screen with visual emphasis. Clicking any sentence in the body text instantly starts playback from that location.
-- **Bookmarks:** Record page, sentence, and timestamp progress to return with a single click from the bookmark list.
+### ⚡ 2. Streamlined Architecture & Ultra-Lightweight Optimization (Battery/Memory Saving)
+- **Playback-Focused Engine:** Resource-heavy features—such as the BGM player, real-time canvas equalizer, audio recorder, bookmarks, and custom font editor—have been removed in the mobile edition to minimize CPU heating and battery consumption.
 
-### 3. 🔴 Real-Time Audio Recording & MP3 Extraction (`NDS_Recorder.js`)
-- **Audio Recording & Sync:** Capture tab audio in real time while the TTS engine reads the novel.
-- **Seamless Pause Integration:** Pausing your reading automatically pauses the audio capture, gathering continuous narration without empty silence.
-- **Instant MP3 Download:** Upon completion or stopping, the audio is exported as an MP3 file formatted as `[Novel_Title]_[Page_Number].mp3`.
+### 📄 3. Direct TXT Document Loading Support
+- **Encoding Auto-Detection:** Supports both EUC-KR and UTF-8 automatic decoding alongside standard JSON bookshelf files.
+- **Multi-File Support & Instant Chunk Parsing:** Select and load multiple text files simultaneously. Long novels containing millions of characters are chunked and paginated in under 0.05 seconds for instant playback.
 
-### 4. 📐 Chapter/Verse Structure & Native Text Preservation
-- **Chapter/Verse Layout:** A right-aligned margin on the left side splits paragraphs clearly by page (e.g., Chapter 1 Verse 1, Verse 2, Verse 3...).
-- **Special Character / Whitespace Filter:** Decorative symbols (`***`, `---`) or whitespace-only lines are automatically excluded from the verse numbering counter.
-- **Native Text Preservation & Selective Speech Filtering:**
-  - Original Hanja (Chinese characters) annotations and English text remain intact and crisp in the visual viewer.
-  - Hanja, English text, and verse numbers can be selectively omitted during TTS speech playback to ensure natural Korean narration.
+### 🛠️ 4. Mobile Browser Bug Fixes & Readability Improvements
+- **Inline Line-Break Rendering Fix:** Applied `box-decoration-break: clone;` to fix line-break background highlighting defects on mobile WebKit/Blink engines.
 
-### 5. 🎨 Themes, Wallpapers & Canvas Equalizer
-- **Customizable Themes:** Includes default themes (White, Dark, Gray, Jade) and options to create/delete (`×`) user-defined themes.
-- **Wallpaper Backgrounds:** Layer paper textures or custom photos onto the background with adjustable **opacity (10% to 100%)**, featuring automated image compression for smooth performance.
-- **Real-Time Canvas Equalizer:** A compact 90px horizontal spectrum box animates 30 frequency bars with a wave effect synchronized to the active TTS speech state.
+### 📲 5. Progressive Web App (PWA) Support (Offline Standalone Execution)
+- **Add to Home Screen Integration:** Detects browser installation events and automatically displays an `[ 📱 Add to Home Screen ]` button at the top of the sidebar.
+- **100% Offline Caching (`service-worker.js`):** Removed all external CDN dependencies and cached core assets locally. The app runs completely offline in airplane mode or subways without internet connectivity.
 
-### 6. 🌐 Dynamic Internationalization (i18n) System
-- **Korean/English & Extensible Architecture:** Employs a module script injection method to prevent CORS security errors when running directly from local files (`file://`).
-- **Smart Fallback System:** If an unsupported language is selected, a fallback pop-up is displayed in English, safely reverting to the previously selected language.
-- **Centralized Version Control:** Updating the version string once in `NDS_App.js` automatically syncs version information across help dialogs and the overall application.
+### 🗂️ 6. PC vs. Mobile Independent Architecture
+| Category | PC Desktop Edition | Mobile PWA Edition (v3.5) |
+| :--- | :--- | :--- |
+| **HTML** | `index.html` (Auto-detects mobile) | `index_m.html` |
+| **Stylesheets** | `style.css` | `m_style.css` (Mobile-optimized flat UI) |
+| **Controller** | `NDS_App.js` (Full version with BGM/Recorder/EQ) | `m_NDS_App.js` (Ultra-lightweight fast player) |
+| **Cache Management** | — | `service-worker.js` (v3.5) |
 
 ---
 
-## 📂 File & Directory Structure
+## 🖥️ 2. PC Version (v3.0) Full Feature Specifications
 
-```text
-NDS_tts-reader/
-├── index.html                  # Main application HTML UI structure
-├── style.css                   # Dynamic theme variables, layout, and animation styles
-├── DynamicRGB_NDS.css          # Brand logo & rainbow visual effect CSS
-├── favicon.ico                 # Favicon icon
-│
-├── NDS_Namespace.js            # Global NDS_TTS namespace definition
-├── NDS_I18nManager.js          # Dynamic script injection i18n manager (CORS prevention)
-├── NDS_HelpManager.js          # Help manager with automatic version parameter injection
-├── NDS_Recorder.js             # Real-time audio recording & MP3 extraction module
-├── NDS_DBManager.js            # IndexedDB database CRUD manager
-├── NDS_TextProcessor.js        # Multi-format parsing (TXT, DOCX, ODT, HWPX, PDF) & pre-processor
-├── NDS_TTSController.js        # Web Speech API controller (Includes Chrome speech stall workaround)
-├── NDS_ThemeManager.js         # Theme settings & wallpaper background manager
-├── NDS_App.js                  # Main event controller & viewer rendering engine (v2.1)
-│
-└── language/                   # Multilingual translation resources
-    ├── NDS_i18n_ko.js          # Korean translation resource file
-    └── NDS_i18n_en.js          # English translation resource file
-```
+### 📚 Smart Bookshelf & Series Management
+- **Multi-Format Parsing:** Support for registering multiple formats at once, including TXT, Word (`.docx`), OpenDocument (`.odt`), Hangul (`.hwpx`), and PDF files.
+- **Series Covers & Auto-Inheritance:** Click folder covers to manually assign custom cover art, or let underlying books automatically inherit series covers.
+- **Series Folders & Continuous Playback:** Organize episodes into series folders and enable automatic continuous playback to the next volume upon reaching the end of a book.
+- **Backup & Restore:** Safely export and restore all bookshelf data, current reading progress, and bookmarks stored in IndexedDB using single JSON files.
 
-## 🚀 Quick Start & Usage
+### 🎧 High-Performance Web Speech API-Based TTS Player
+- **Precision Speech Control:** Complete control over Play, Pause, Stop, Speed adjustment (0.5x to 2.0x), and Volume.
+- **Real-Time Highlighting & Click-to-Jump:** Auto-scrolls the active sentence to the screen center with visual emphasis. Clicking any sentence directly jumps TTS playback to that position.
+- **Speech Freezing Prevention Engine:** Resolves Chrome/Edge speech stall bugs by automatically invoking `synth.resume()` right before speech and skipping problem sentences upon error detection.
+- **Smart Voice Prioritization:** Automatically moves voice models matching the active UI language (Korean/English) to the top of the selection dropdown.
+- **Bookmarks:** Saves current page, sentence index, and timestamp with one-click restoration from the bookmark list.
 
-### 1. How to Run
-- **Direct Local Execution:** Double-click `index.html` to open directly in modern browsers such as Chrome or Edge.
-- **Web Server Execution:** Run via VS Code's Live Server or a local Node.js / Python server (`http://localhost:5500`).
+### 📐 Chapter & Section System
+- **Right-Aligned Margin System (`text-align: right`):** Displays paragraph numbers (e.g., `Ch.1 Sec.1, Sec.2...`) in a dedicated 55px left margin area.
+- **Symbol & Space Auto-Exclusion:** Decorative symbols (`***`, `---`) and empty lines are automatically excluded from section counting.
+- **Multilingual Label Sync:** Numbering labels adapt dynamically when switching languages (Korean/English).
+- **TTS Speech Exclusion Toggle:** Includes an "Exclude Section Numbers" checkbox (checked by default) in settings to show numbers visually while bypassing them during TTS playback.
 
-### 2. Audio Recording (MP3 Extraction)
-1. Click the **🔴 [Record]** button on the top control panel.
-2. When the browser screen sharing prompt appears:
-   - Select the **[Chrome Tab]** (or **[Edge Tab]**) option.
-   - Select the current reader tab, ensure **Share tab audio** in the bottom corner is enabled, and click **[Share]**.
-3. Pressing **[Pause]** or **[Play]** while listening will automatically pause or resume the active audio recording.
-4. When reading completes or the **🔴 [Recording]** button is pressed again, the `[Novel_Title]_[Page_Number].mp3` file will automatically download to your computer.  
-*(※ After the initial permission grant per session, recording starts instantly without pop-up prompts until the page is refreshed.)*
+### 🔤 Native Text Preservation & On-the-Fly TTS Filtering
+- **100% Native Visual Preservation:** Visual reader displays original Hanja (Chinese characters) annotations, English text, and formatting crisply.
+- **Real-Time Speech Filtering:** Applies regex filters at the exact moment of TTS output, omitting Hanja and foreign text to deliver clean, fluent Korean speech synthesis.
 
----
+### 🔴 Real-Time Audio Recording & MP3 Extraction (`NDS_Recorder.js`)
+- **Standalone Recorder Module:** Captures tab audio in real time and exports directly as `[Novel_Title]_[Page_Number].mp3`.
+- **Seamless Pause Synchronization:** Pausing reading automatically pauses recording to create clean audio files without silent gaps.
+- **AGC Spike Protection:** Prevents sudden volume spikes at recording startup through fine-tuned audio constraints.
+- **Single Permission Persistence:** Remembers session authorization after the initial prompt, allowing instant continuous recording without repeated pop-ups until refreshed.
 
-## 🛠 Tech Stack & Dependencies
+### 🎵 MP3 Background Music Player (`NDS_BgmPlayer.js`)
+- **Dedicated BGM Engine:** Plays background music (`.mp3`) simultaneously while reading.
+- **Low Default Volume (20%):** Pre-configured to a subtle 20% volume to avoid overpowering TTS narration.
+- **Playback Modes:** Supports Sequential, Shuffle, and Repeat All modes.
+- **Independent BGM Modal (`#bgm-modal`):** Full control window to add, delete, clear all (`× Clear All`), and manage track order.
+- **IndexedDB Persistence:** Added MP3 files remain stored locally even after browser restarts.
+- **Recording Synergy:** Enables exporting high-quality combined MP3 files containing both TTS narration and background music.
 
-- **Core:** HTML5, CSS3 (CSS Variables, Flexbox, Grid, Pseudo-elements), Vanilla JavaScript (ES6+ Classes)
-- **Web APIs:**
-  - **Web Speech API (`speechSynthesis`):** TTS voice synthesis engine
-  - **MediaRecorder API & `getDisplayMedia`:** Real-time audio capture & MP3 export
-  - **Canvas 2D API:** 30-bar dynamic equalizer visualizer
-  - **IndexedDB:** Local storage for novel texts, thumbnails, and reading progress
-  - **LocalStorage:** User preferences, themes, and wallpaper settings
-- **External CDN Libraries:**
-  - **JSZip (v3.10.1):** ZIP archive extraction and data backup handling
-  - **Mammoth.js (v1.8.0):** Microsoft Word (`.docx`) text parsing
-  - **PDF.js (v3.11.174):** PDF document text parsing
-  - **Bootstrap Icons:** UI vector icon set
+### 🎨 Themes, Wallpapers & Canvas Equalizer (`NDS_ThemeManager.js`)
+- **Default Themes:** White, Dark, Gray, and Jade.
+- **6 Custom Theme Slots:** Customize and delete (`×`) individual color schemes, including background, sidebar, card color, card borders, highlight color, and text color.
+- **Wallpaper Backgrounds:** Layer paper textures or custom photos onto the background with adjustable opacity (10% to 100%).
+- **Ultra-Slim Compression:** Automated Canvas compression (1280px / 60KB–100KB) guarantees zero lag.
+- **Fixed Frame Structure:** CSS pseudo-elements (`::before`) keep wallpapers fixed during page scrolling while preserving 100% text clarity.
+- **Slim Canvas Equalizer:** A compact 90px spectrum box animates 30 frequency bars in real time synchronized with active speech.
+
+### ⚙️ Dynamic Internationalization (i18n) & Centralized Versioning (`I18nManager` & `HelpManager`)
+- **Zero CORS Error Script Loader:** Asynchronously loads language files (`language/NDS_i18n_*.js`) only when needed, eliminating CORS security errors even when opening via direct `file://` local access.
+- **Smart Fallback Mechanism:** Displays an English notice popup and safely reverts to the previously active language if an unsupported file is requested.
+- **Independent Help Module (`NDS_HelpManager.js`):** Modular popup providing up-to-date documentation on core application features.
 
 ---
 
-## 📜 Version & Developer Information
+## 💖 3. Sponsor & Developer Info
 
-- **Current Version:** v2.31 (Integrated Chapter/Verse System, i18n, & Audio Recording)
-- **Developer:** RyuKwoon
-- **Repository:** GitHub Repository
-- **License:** Global OpenSource Edition
-
-Hi! I'm **[RyuKwoon]**, an open-source developer.  
+Hi! I'm **RyuKwoon**, an open-source developer.  
 Your sponsorship helps me keep my projects ad-free, open-source, and actively maintained. Thank you for your support! ☕
 
 [![Sponsor me on GitHub](https://img.shields.io/badge/Sponsor-%F0%9F%92%96-brightgreen?style=for-the-badge)](https://github.com/sponsors/ryukwoon)
 
-© 2026 RyuKwoon. 
+```text
+© 2026 RyuKwoon. All rights reserved.
 This software is a standalone client-side open-source reading tool.
