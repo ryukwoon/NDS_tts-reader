@@ -21,10 +21,21 @@
 
 ### 🛠️ 4. Mobile Browser Bug Fixes & Readability Improvements
 - **Inline Line-Break Rendering Fix:** Applied `box-decoration-break: clone;` to fix line-break background highlighting defects on mobile WebKit/Blink engines.
+<p align="center">
+<img width="24%" src="https://github.com/user-attachments/assets/31fda618-81e2-40d1-a000-2668f3a7a833" />
+<img width="24%" src="https://github.com/user-attachments/assets/046f585b-319f-4974-b871-451c75afa96f" />
+<img width="24%" src="https://github.com/user-attachments/assets/627a2b31-b4cd-4c4d-9e62-d4091fe7bf57" />
+<img width="24%" src="https://github.com/user-attachments/assets/91821adb-320d-4b4f-be20-876779607f77" />
+</p>
 
 ### 📲 5. Progressive Web App (PWA) Support (Offline Standalone Execution)
 - **Add to Home Screen Integration:** Detects browser installation events and automatically displays an `[ 📱 Add to Home Screen ]` button at the top of the sidebar.
 - **100% Offline Caching (`service-worker.js`):** Removed all external CDN dependencies and cached core assets locally. The app runs completely offline in airplane mode or subways without internet connectivity.
+<p align="center">
+<img width="30%" src="https://github.com/user-attachments/assets/233f2859-423b-409e-8b0f-8f4cf877164b" />
+<img width="30%" src="https://github.com/user-attachments/assets/eed59f88-5b58-4856-8c47-a614ea17f673" />
+<img width="30%" src="https://github.com/user-attachments/assets/6fc81bd0-501b-4a44-bfe6-f30da3cc83f3" />
+</p>
 
 ### 🗂️ 6. PC vs. Mobile Independent Architecture
 | Category | PC Desktop Edition | Mobile PWA Edition (v3.5) |
@@ -87,7 +98,10 @@
 - **Zero CORS Error Script Loader:** Asynchronously loads language files (`language/NDS_i18n_*.js`) only when needed, eliminating CORS security errors even when opening via direct `file://` local access.
 - **Smart Fallback Mechanism:** Displays an English notice popup and safely reverts to the previously active language if an unsupported file is requested.
 - **Independent Help Module (`NDS_HelpManager.js`):** Modular popup providing up-to-date documentation on core application features.
-
+<p align="center">
+<img width="40%" src="https://github.com/user-attachments/assets/ab49cf5b-96ac-40d4-bf95-9c0b1a185ddb" />
+<img width="40%" src="https://github.com/user-attachments/assets/975eb3a5-ca73-4290-ae1f-8f0479ec94e1" />
+</p>
 ---
 
 ## 💖 3. Sponsor & Developer Info
