@@ -2,7 +2,16 @@
 <html lang="ko">
 <head>
 	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<!-- [최우선 리다이렉트] CSS/라이브러리 로드 전 0.0001초 만에 index_m.html 전환 -->
+	<script>
+		if (/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || (window.innerWidth <= 768 && !location.search.includes('pc=1'))) {
+			location.replace("index_m.html");
+		}
+	</script>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+	<link rel="manifest" href="manifest.json">
 	<link rel="icon" href="favicon.ico" type="image/x-icon">
 	<title>NDS TTS 텍스트 리더</title>
 	<link rel="stylesheet" href="font/bootstrap-icons.css">
@@ -36,7 +45,7 @@
 			<div class="sidebar-header-row">
 				<h3 data-i18n="sidebar.myLibrary">내 책장</h3>
 				
-				<!-- BGM 퀵 제어 버튼 그룹 (책장 닫기 버튼 바로 왼쪽에 위치) -->
+				<!-- BGM 퀵 제어 버튼 그룹 -->
 				<div class="bgm-quick-controls" style="display: flex; gap: 4px; align-items: center; margin-left: auto; margin-right: 6px;">
 					<button id="btn-bgm-settings" class="icon-toggle-btn" data-i18n-title="settings.bgmSettingsTt"><i class="bi-music-note-beamed" style="color: #3b82f6;"></i></button>
 					<button id="btn-bgm-toggle" class="icon-toggle-btn" data-i18n-title="settings.bgmToggleTt"><i class="bi-play-circle"></i></button>
@@ -311,28 +320,25 @@
 		</div>
 	</div><!-- 앱 모달 END -->
 
-	<!-- 3. [독립 레이아웃] MP3 배경음악(BGM) 전용 설정 모달 창 (다국어 및 문구 반영) -->
+	<!-- 3. [독립 레이아웃] MP3 배경음악(BGM) 전용 설정 모달 창 -->
 	<div id="bgm-modal" class="modal-overlay">
 		<div class="modal-content" style="max-width: 480px; width: 90%;">
 			<h3 style="display:flex; justify-content:space-between; align-items:center;">
 				<span data-i18n="settings.bgmGroup">🎵 MP3 배경음악 설정</span>
 			</h3>
 			<div style="display: flex; flex-direction: column; gap: 10px;">
-				<!-- 상단 컨트롤 및 재생 모드 -->
 				<div style="display: flex; gap: 8px; align-items: center; justify-content: space-between; background: rgba(128,128,128,0.08); padding: 8px; border-radius: 8px;">
 					<div style="display: flex; gap: 4px;">
 						<button id="btn-bgm-add" class="btn-folder-set" style="padding: 4px 8px; font-size: 11px;"><i class="bi-plus-lg"></i> <span data-i18n="settings.bgmAdd">음악 추가</span></button>
 						<input type="file" id="bgm-file-uploader" accept="audio/mp3,audio/*" style="display:none;" multiple>
 						<button id="btn-bgm-clear" class="btn-theme-delete" style="width:auto; padding:0 8px;" data-i18n-title="settings.bgmClearAll">&times; <span data-i18n="settings.bgmClearAll">모두비우기</span></button>
 					</div>
-					<!-- 순차/랜덤 및 전체반복 토글 -->
 					<div style="display: flex; gap: 6px; align-items: center; font-size: 11px;">
 						<button id="btn-bgm-shuffle" class="icon-toggle-btn" data-i18n-title="settings.bgmShuffleTt"><i class="bi-shuffle"></i></button>
 						<button id="btn-bgm-repeat" class="icon-toggle-btn active" data-i18n-title="settings.bgmRepeatTt"><i class="bi-repeat"></i></button>
 					</div>
 				</div>
 
-				<!-- 볼륨 조절 (기본 20% 적용) -->
 				<div class="drawer-group" style="padding: 0 4px;">
 					<label for="range-bgm-volume" style="display:flex; justify-content:space-between; font-size:11px; font-weight:bold;">
 						<span data-i18n="settings.bgmVolume">배경음악 볼륨 (기본 20%)</span>
@@ -341,14 +347,11 @@
 					<input type="range" id="range-bgm-volume" min="0" max="1" step="0.05" value="0.20">
 				</div>
 
-				<!-- 재생 중인 곡 정보 -->
 				<div id="bgm-current-track-info" style="font-size: 11px; font-weight: bold; color: #3b82f6; text-align: center; padding: 4px; background: rgba(59,130,246,0.1); border-radius: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
 					등록된 배경음악 없음
 				</div>
 
-				<!-- MP3 플레이리스트 리스트 박스 -->
 				<div id="bgm-playlist-container" style="max-height: 180px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px;">
-					<!-- 플레이리스트 항목 동적 생성 -->
 				</div>
 			</div>
 			<div class="modal-footer" style="margin-top: 8px;">

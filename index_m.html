@@ -1,0 +1,223 @@
+<!-- === index_m.html 시작 === -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+	<meta name="apple-mobile-web-app-title" content="NDS TTS">
+	<link rel="manifest" href="manifest.json">
+	<link rel="apple-touch-icon" href="icon-192.png">
+	<link rel="icon" href="favicon.ico" type="image/x-icon">
+	<title>NDS TTS 모바일 리더</title>
+	<link rel="stylesheet" href="font/bootstrap-icons.css">
+	<link rel="stylesheet" href="DynamicRGB_NDS.css">
+	<link rel="stylesheet" href="m_style.css">
+</head>
+<body class="theme-white mobile-mode">
+
+	<!-- 1. 모바일 책장 화면 (초기 화면) -->
+	<div id="sidebar" class="app-card">
+		<!-- 상단 타이틀 이미지 배너 (가로 100% 비율 유지) -->
+		<div class="mobile-brand-banner">
+			<img src="NDS_TEXT_to_Speech.nds" alt="NDS TEXT to Speech" class="title-banner-img">
+		</div>
+
+		<div class="sidebar-header">
+			<!-- PWA 홈화면 추가 설치 바 -->
+			<button id="btn-pwa-install" class="btn-pwa-install" style="display:none;"><i class="bi-download"></i> <span>홈 화면에 앱 추가하기</span></button>
+
+			<!-- 상단 3버튼 균등 배열: [책장] [TXT문서] [비우기] -->
+			<div class="library-io-buttons">
+				<button id="btn-import-trigger" class="btn-modern-action btn-primary"><i class="bi-folder2-open"></i> 책장 </button>
+				<input type="file" id="library-importer" accept=".json" style="display: none;">
+
+				<button id="btn-upload-txt" class="btn-modern-action btn-success"><i class="bi-file-earmark-text"></i> TXT문서 </button>
+				<input type="file" id="txt-file-uploader" accept=".txt,text/plain" multiple style="display: none;">
+
+				<button id="btn-clear-library" class="btn-modern-action btn-danger"><i class="bi-trash"></i> 비우기 </button>
+			</div>
+		</div>
+
+		<!-- 책/시리즈 목록 영역 (독립 스크롤) -->
+		<div class="book-list" id="book-list-element"></div>
+
+		<!-- 사이드바 하단 제어 메뉴: [테마변경] / [설정] / [본문보기] -->
+		<div class="footer-btn-grid">
+			<button id="btn-quick-theme" class="modern-footer-btn"><i class="bi-palette"></i> <span>테마변경</span></button>
+			<button id="btn-toggle-settings" class="modern-footer-btn"><i class="bi-sliders"></i> <span>설정</span></button>
+			<button id="btn-return-viewer" class="modern-footer-btn btn-highlight-footer"><i class="bi-book-half"></i> <span>본문보기</span></button>
+		</div>
+	</div>
+
+	<!-- 2. 본문 뷰어 화면 (소설/회차 선택 또는 [본문보기] 클릭 시 전환) -->
+	<div id="main-area">
+		<!-- 상단 고정 플레이어 툴바 -->
+		<div id="reader-controls" class="app-card">
+			<button id="btn-back-to-library" class="btn-back-library"><i class="bi-chevron-left"></i> <span>책장목록</span></button>
+
+			<div class="media-controls-wrap">
+				<button id="btn-play" class="media-btn" title="재생"><i class="bi-play-fill"></i> <span>재생</span></button>
+				<button id="btn-pause" class="media-btn" title="일시정지"><i class="bi-pause-fill"></i> <span>일시정지</span></button>
+				<button id="btn-stop" class="media-btn active" title="정지"><i class="bi-stop-fill"></i> <span>정지</span></button>
+			</div>
+
+			<div class="ctrl-group">
+				<label class="checkbox-label">
+					<input type="checkbox" id="chk-series-autoplay"> <span>연속재생</span>
+				</label>
+			</div>
+
+			<div class="ctrl-group speed-group">
+				<label for="range-rate">속도</label>
+				<input type="range" id="range-rate" min="0.5" max="2" step="0.1" value="1">
+			</div>
+		</div>
+
+		<!-- 중단 본문 텍스트뷰어 (배경 고정 레이어 & 독립 스크롤) -->
+		<div id="reader-content" class="app-card">
+			<div class="reader-scroll-area">
+				<p class="empty-message">
+					<i class="bi-book"></i> &nbsp;NDS TTS 모바일 &nbsp;<i class="bi-book"></i> <br>
+					<img src="NDS_TEXT_to_Speech.nds" class="empty-guide-img" border="0" alt=""><br>
+					<span>책장에서 소설을 선택하세요.</span><br>
+				</p>
+			</div>
+		</div>
+
+		<!-- 하단 고정 페이징 및 볼륨 조절 바 -->
+		<div class="pager app-card">
+			<div class="ctrl-group volume-group">
+				<i id="icon-volume" class="bi-volume-up-fill"></i>
+				<input type="range" id="range-volume" min="0" max="1" step="0.1" value="0.8">
+			</div>
+
+			<div class="page-controls">
+				<button id="btn-prev-page" class="btn-page-move">이전 장</button>
+				<span id="page-indicator">0 / 0</span>
+				<button id="btn-next-page" class="btn-page-move">다음 장</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- 모바일 전용 환경설정 모달 창 -->
+	<div id="settings-modal" class="modal-overlay">
+		<div class="modal-content settings-modal-content">
+			<div class="modal-header-row">
+				<h3>환경설정</h3>
+				<button id="btn-close-settings-x" class="btn-close-x">&times;</button>
+			</div>
+
+			<div class="settings-modal-grid">
+
+				<!-- 1. 폰트/글자크기/줄간격 섹션 -->
+				<div class="settings-section-card">
+					<div class="section-label">보기 및 텍스트 설정</div>
+					<div class="drawer-group">
+						<label for="select-font-size">글자 크기</label>
+						<select id="select-font-size">
+							<option value="15px">작게 (15px)</option>
+							<option value="18px" selected>보통 (18px)</option>
+							<option value="22px">크게 (22px)</option>
+							<option value="26px">아주크게 (26px)</option>
+						</select>
+					</div>
+					<div class="drawer-group">
+						<label for="select-line-height">줄 간격</label>
+						<select id="select-line-height">
+							<option value="1.3">1.3 배</option>
+							<option value="1.6" selected>1.6 배 (보통)</option>
+							<option value="1.9">1.9 배</option>
+							<option value="2.3">2.3 배</option>
+						</select>
+					</div>
+					<div class="drawer-group filter-column">
+						<label><input type="checkbox" id="chk-exclude-hanja" checked><span>한자 제외</span></label>
+						<label><input type="checkbox" id="chk-exclude-english"><span>영문 제외</span></label>
+						<label><input type="checkbox" id="chk-exclude-section-num" checked><span>절 번호 음성 제외</span></label>
+					</div>
+				</div>
+
+				<!-- 2. 목소리 선택 섹션 -->
+				<div class="settings-section-card">
+					<div class="section-label">음성 모델 (목소리)</div>
+					<div class="drawer-group">
+						<label for="select-voice">한국어 / 글로벌 음성 선택</label>
+						<select id="select-voice" style="width:100%;"></select>
+					</div>
+				</div>
+
+				<!-- 3. 테마 및 배경화면 섹션 -->
+				<div class="settings-section-card">
+					<div class="section-label">테마 & 배경화면</div>
+					<div class="drawer-group">
+						<label for="select-theme">테마 선택</label>
+						<select id="select-theme"></select>
+					</div>
+					<div class="drawer-group" style="gap:8px; margin-top: 6px;">
+						<div style="display:flex; gap:8px;">
+							<button id="btn-select-wallpaper" class="btn-folder-set" style="flex:1;">배경 이미지 선택</button>
+							<button id="btn-remove-wallpaper" class="btn-theme-delete" style="display:none;">제거</button>
+						</div>
+						<input type="file" id="wallpaper-uploader" accept="image/*" style="display:none;">
+						<div id="wallpaper-status-display" class="folder-path-display">🖼️ 미설정</div>
+						<div class="drawer-group" style="margin-top:4px;">
+							<label for="range-wallpaper-opacity"><span>투명도</span>: <span id="val-wallpaper-opacity">100%</span></label>
+							<input type="range" id="range-wallpaper-opacity" min="0.1" max="1.0" step="0.05" value="1.0">
+						</div>
+					</div>
+				</div>
+
+				<!-- 4. 앱 버전 및 개발자 정보 섹션 -->
+				<div class="settings-section-card app-info-card">
+					<div class="section-label">애플리케이션 정보</div>
+					<div class="app-info-row">
+						<span>앱 버전</span>
+						<strong id="app-version-display">v3.5</strong>
+					</div>
+					<div class="app-info-row">
+						<span>오프라인 PWA</span>
+						<span style="color:#10b981; font-weight:bold;">지원됨 (Standalone)</span>
+					</div>
+					<button id="btn-open-github" class="btn-github-link"><i class="bi-github"></i> GitHub 저장소 방문</button>
+				</div>
+
+			</div>
+			<div class="modal-footer">
+				<button id="btn-close-settings-modal" class="btn-modal-confirm">확인</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- 기본 알림 모달 -->
+	<div id="app-modal" class="modal-overlay">
+		<div class="modal-content">
+			<h3 id="modal-title">NDS TTS</h3>
+			<div id="modal-body">내용이 표시됩니다.</div>
+			<div class="modal-footer">
+				<button id="btn-close-modal" class="btn-modal-confirm">닫기</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- PWA 서비스 워커 및 스크립트 모듈 로드 -->
+	<script>
+		if ('serviceWorker' in navigator) {
+			window.addEventListener('load', () => {
+				navigator.serviceWorker.register('./service-worker.js').catch(err => console.log('SW registration failed:', err));
+			});
+		}
+	</script>
+	<script src="NDS_Namespace.js"></script>
+	<script src="NDS_I18nManager.js"></script>
+	<script src="NDS_HelpManager.js"></script>
+	<script src="NDS_DBManager.js"></script>
+	<script src="NDS_TextProcessor.js"></script>
+	<script src="NDS_TTSController.js"></script>
+	<script src="NDS_ThemeManager.js"></script>
+	<script src="m_NDS_App.js"></script>
+
+</body>
+</html>
+<!-- === index_m.html 끝 === -->

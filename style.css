@@ -791,3 +791,143 @@ body {
 #btn-bgm-toggle.active {
 	background-color: rgba(16, 185, 129, 0.2) !important;
 }
+
+/* 모바일 모드(mobile-mode) 접속 시 전체 레이아웃 */
+body.mobile-mode {
+	padding: 0 !important;
+	gap: 0 !important;
+	overflow: hidden !important;
+}
+
+/* 모바일 화면 전환 제어 (사이드바 ↔ 본문) */
+body.mobile-mode #sidebar {
+	width: 100% !important;
+	height: 100dvh !important;
+	border-radius: 0 !important;
+	border: none !important;
+	display: flex !important;
+	flex-direction: column !important;
+}
+
+body.mobile-mode #main-area {
+	width: 100% !important;
+	height: 100dvh !important;
+	display: none; /* 책장 선택 전에는 숨김 */
+	flex-direction: column !important;
+	gap: 0 !important;
+}
+
+/* 소설 터치 선택 시 본문 화면으로 즉시 전환 */
+body.mobile-mode.view-reader #sidebar {
+	display: none !important;
+}
+
+body.mobile-mode.view-reader #main-area {
+	display: flex !important;
+}
+
+/* 사이드바 하단 버튼 잘림 방지 정밀 Flex 구조 */
+body.mobile-mode .sidebar-header {
+	flex-shrink: 0;
+}
+
+body.mobile-mode #book-list-element {
+	flex: 1;
+	overflow-y: auto;
+	min-height: 120px;
+}
+
+body.mobile-mode .footer-btn-grid {
+	flex-shrink: 0;
+	padding: 10px 6px;
+	background-color: var(--sidebar-bg);
+	border-top: 1px solid var(--border-color);
+}
+
+/* 모바일 본문 돌아가기 대형 버튼 */
+.btn-back-library {
+	display: none;
+	background-color: #3b82f6;
+	color: #ffffff;
+	border: none;
+	border-radius: 6px;
+	padding: 6px 10px;
+	font-size: 12px;
+	font-weight: bold;
+	cursor: pointer;
+	align-items: center;
+	gap: 4px;
+}
+
+body.mobile-mode .btn-back-library {
+	display: inline-flex;
+}
+
+/* 대형 터치 친화적 버튼 규격 */
+body.mobile-mode .library-io-buttons button,
+body.mobile-mode .flat-footer-btn,
+body.mobile-mode .media-controls-wrap button,
+body.mobile-mode .pager button {
+	min-height: 42px;
+	font-size: 13px !important;
+	font-weight: bold;
+	border-radius: 8px;
+}
+
+/* 본문 상단(플레이어) & 하단(페이징) 완전 고정 */
+body.mobile-mode #reader-controls {
+	flex-shrink: 0;
+	border-radius: 0;
+	border-left: none;
+	border-right: none;
+	border-top: none;
+	padding: 8px 10px;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 6px;
+}
+
+body.mobile-mode #reader-content {
+	flex: 1;
+	min-height: 0;
+	border-radius: 0;
+	border: none;
+}
+
+body.mobile-mode .pager {
+	flex-shrink: 0;
+	height: 48px !important;
+	border-radius: 0;
+	border-left: none;
+	border-right: none;
+	border-bottom: none;
+	padding: 6px 12px;
+}
+
+/* 모바일 전용 대형 터치 반응형 최적화 */
+@media (max-width: 768px) {
+	body {
+		padding: 4px;
+		gap: 0;
+	}
+
+	#sidebar {
+		width: 100% !important;
+		position: fixed;
+		top: 0;
+		left: 0;
+		height: 100vh;
+		z-index: 1000;
+	}
+
+	.media-controls-wrap button {
+		padding: 8px 12px;
+		font-size: 13px;
+	}
+
+	.reader-scroll-area {
+		padding: 20px 4% 20px 2%;
+	}
+}

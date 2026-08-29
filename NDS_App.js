@@ -1,10 +1,14 @@
-// NDS_App.js - 애플리케이션 진입점 및 전역 메인 컨트롤러 (v2.31 포맷팅 및 버그 패치 적용)
+// NDS_App.js - 애플리케이션 진입점 및 전역 메인 컨트롤러 (v3.2 모바일 전용 화면 전환 및 백버튼 연동)
 window.NDS_TTS = window.NDS_TTS || {};
 
 window.NDS_TTS.App = class App {
 	// 앱 중앙 버전 정보 정의
 	static get VERSION() {
-		return "v2.31"; // 버전 갱신 규칙 반영 (v2.31)
+		return "v3.2"; // 모바일 전용 UX 개편 버전 (v3.2)
+	}
+
+	static get GITHUB_URL() {
+		return "https://ryukwoon.github.io/NDS_tts-reader/";
 	}
 
 	getVersion() {
@@ -32,6 +36,8 @@ window.NDS_TTS.App = class App {
 
 		this.activeUploadSeriesId = null;
 		this.expandedSeries = new Set();
+		this.wakeLock = null;
+		this.deferredPrompt = null;
 
 		this.canvas = null;
 		this.ctx = null;
@@ -50,6 +56,17 @@ window.NDS_TTS.App = class App {
 
 	async start() {
 		try {
+			// 모바일 접속 감지
+			const isMobile = window.innerWidth <= 768 || /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+			if (isMobile) {
+				document.body.classList.add("mobile-mode");
+			}
+
+			window.addEventListener("beforeinstallprompt", (e) => {
+				e.preventDefault();
+				this.deferredPrompt = e;
+			});
+
 			await this.dbManager.init();
 			await this.i18n.init();
 			this.bindEvents();
@@ -57,8 +74,38 @@ window.NDS_TTS.App = class App {
 			this.initPreferences();
 			this.loadBookShelf();
 			this.initVisualizer();
+			this.bindMobileLifeCycle();
 		} catch (error) {
 			console.error("앱 초기화 중 문제가 생겼습니다.", error);
+		}
+	}
+
+	bindMobileLifeCycle() {
+		window.addEventListener("visibilitychange", () => {
+			if (document.visibilityState === "hidden") {
+				this.saveState();
+			}
+		});
+		window.addEventListener("pagehide", () => {
+			this.saveState();
+		});
+	}
+
+	async requestWakeLock() {
+		if ('wakeLock' in navigator) {
+			try {
+				this.wakeLock = await navigator.wakeLock.request('screen');
+			} catch (err) {
+				console.log("WakeLock 활성화 실패:", err);
+			}
+		}
+	}
+
+	releaseWakeLock() {
+		if (this.wakeLock) {
+			this.wakeLock.release().then(() => {
+				this.wakeLock = null;
+			});
 		}
 	}
 
@@ -88,22 +135,32 @@ window.NDS_TTS.App = class App {
 		document.getElementById("select-line-height").value = savedLineHeight;
 		this.applyLineHeight(savedLineHeight);
 
-		document.getElementById("input-eq-bgcolor").value = this.eqBgColor;
-		document.getElementById("input-eq-color").value = this.eqSpectrumColor;
-		document.getElementById("range-eq-thickness").value = this.eqThickness;
-		document.getElementById("range-eq-speed").value = this.eqSpeed;
+		const inputEqBg = document.getElementById("input-eq-bgcolor");
+		if (inputEqBg) inputEqBg.value = this.eqBgColor;
+		
+		const inputEqCol = document.getElementById("input-eq-color");
+		if (inputEqCol) inputEqCol.value = this.eqSpectrumColor;
+
+		const rangeEqThick = document.getElementById("range-eq-thickness");
+		if (rangeEqThick) rangeEqThick.value = this.eqThickness;
+
+		const rangeEqSpd = document.getElementById("range-eq-speed");
+		if (rangeEqSpd) rangeEqSpd.value = this.eqSpeed;
+
 		this.applyEqBgColor(this.eqBgColor);
 
 		const savedFontFamily = localStorage.getItem("fontFamily") || "system-ui, sans-serif";
 		const savedCustomFont = localStorage.getItem("customFontFamily") || "";
 		
-		document.getElementById("select-font-family").value = savedFontFamily;
-		const customInput = document.getElementById("input-custom-font");
-		customInput.value = savedCustomFont;
+		const selectFont = document.getElementById("select-font-family");
+		if (selectFont) selectFont.value = savedFontFamily;
 
-		if (savedFontFamily === "custom") {
+		const customInput = document.getElementById("input-custom-font");
+		if (customInput) customInput.value = savedCustomFont;
+
+		if (savedFontFamily === "custom" && customInput) {
 			customInput.style.display = "inline-block";
-		} else {
+		} else if (customInput) {
 			customInput.style.display = "none";
 		}
 		this.applyFontFamily(savedFontFamily, savedCustomFont);
@@ -130,6 +187,7 @@ window.NDS_TTS.App = class App {
 
 	populateThemeOptions() {
 		const selectTheme = document.getElementById("select-theme");
+		if (!selectTheme) return;
 		const currentVal = selectTheme.value;
 
 		const themeWhite = this.i18n.t("settings.themeWhite");
@@ -268,6 +326,14 @@ window.NDS_TTS.App = class App {
 	}
 
 	bindEvents() {
+		// [신규] 모바일 전용 내 책장 돌아가기 버튼 클릭 이벤트
+		const btnBackLib = document.getElementById("btn-back-to-library");
+		if (btnBackLib) {
+			btnBackLib.addEventListener("click", () => {
+				document.body.classList.remove("view-reader");
+			});
+		}
+
 		document.getElementById("btn-upload-trigger").addEventListener("click", () => {
 			this.activeUploadSeriesId = null;
 			document.getElementById("file-uploader").click();
@@ -275,7 +341,11 @@ window.NDS_TTS.App = class App {
 		document.getElementById("btn-create-series").addEventListener("click", () => this.createSeriesAction());
 		document.getElementById("file-uploader").addEventListener("change", (e) => this.handleFileUpload(e));
 		
-		document.getElementById("btn-export-library").addEventListener("click", () => this.exportLibraryToFile());
+		const btnExport = document.getElementById("btn-export-library");
+		if (btnExport) {
+			btnExport.addEventListener("click", () => this.exportLibraryToFile());
+		}
+
 		document.getElementById("btn-import-trigger").addEventListener("click", () => {
 			document.getElementById("library-importer").click();
 		});
@@ -295,60 +365,111 @@ window.NDS_TTS.App = class App {
 			e.currentTarget.blur();
 		});
 
-		document.getElementById("btn-bgm-settings").addEventListener("click", () => {
-			document.getElementById("bgm-modal").style.display = "flex";
-		});
-		document.getElementById("btn-close-bgm-modal").addEventListener("click", () => {
-			document.getElementById("bgm-modal").style.display = "none";
-		});
-		document.getElementById("btn-bgm-toggle").addEventListener("click", () => {
-			this.bgmPlayer.togglePlay();
-		});
+		const btnBgmSettings = document.getElementById("btn-bgm-settings");
+		if (btnBgmSettings) {
+			btnBgmSettings.addEventListener("click", () => {
+				document.getElementById("bgm-modal").style.display = "flex";
+			});
+		}
 
-		document.getElementById("btn-bgm-add").addEventListener("click", () => {
-			document.getElementById("bgm-file-uploader").click();
-		});
-		document.getElementById("bgm-file-uploader").addEventListener("change", (e) => {
-			this.bgmPlayer.addTracks(e.target.files);
-			e.target.value = "";
-		});
-		document.getElementById("btn-bgm-clear").addEventListener("click", () => {
-			this.bgmPlayer.clearPlaylist();
-		});
-		document.getElementById("btn-bgm-shuffle").addEventListener("click", () => {
-			this.bgmPlayer.toggleShuffle();
-		});
-		document.getElementById("btn-bgm-repeat").addEventListener("click", () => {
-			this.bgmPlayer.toggleRepeat();
-		});
-		document.getElementById("range-bgm-volume").addEventListener("input", (e) => {
-			this.bgmPlayer.setVolume(e.target.value);
-		});
+		const btnCloseBgm = document.getElementById("btn-close-bgm-modal");
+		if (btnCloseBgm) {
+			btnCloseBgm.addEventListener("click", () => {
+				document.getElementById("bgm-modal").style.display = "none";
+			});
+		}
 
-		document.getElementById("btn-record").addEventListener("click", async () => {
-			if (!this.recorder.isRecording) {
-				const bookTitle = this.currentBook ? this.currentBook.title.replace(/\.[^/.]+$/, "") : "tts_reading";
-				const pageNum = this.currentPageIndex + 1;
-				const filename = `${bookTitle}_${pageNum}장`;
+		const btnBgmToggle = document.getElementById("btn-bgm-toggle");
+		if (btnBgmToggle) {
+			btnBgmToggle.addEventListener("click", () => {
+				this.bgmPlayer.togglePlay();
+			});
+		}
 
-				const success = await this.recorder.start(filename);
-				if (success) {
-					this.updateRecordButtonUI(true);
+		const btnBgmAdd = document.getElementById("btn-bgm-add");
+		if (btnBgmAdd) {
+			btnBgmAdd.addEventListener("click", () => {
+				document.getElementById("bgm-file-uploader").click();
+			});
+		}
+
+		const bgmUploader = document.getElementById("bgm-file-uploader");
+		if (bgmUploader) {
+			bgmUploader.addEventListener("change", (e) => {
+				this.bgmPlayer.addTracks(e.target.files);
+				e.target.value = "";
+			});
+		}
+
+		const btnBgmClear = document.getElementById("btn-bgm-clear");
+		if (btnBgmClear) {
+			btnBgmClear.addEventListener("click", () => {
+				this.bgmPlayer.clearPlaylist();
+			});
+		}
+
+		const btnBgmShuffle = document.getElementById("btn-bgm-shuffle");
+		if (btnBgmShuffle) {
+			btnBgmShuffle.addEventListener("click", () => {
+				this.bgmPlayer.toggleShuffle();
+			});
+		}
+
+		const btnBgmRepeat = document.getElementById("btn-bgm-repeat");
+		if (btnBgmRepeat) {
+			btnBgmRepeat.addEventListener("click", () => {
+				this.bgmPlayer.toggleRepeat();
+			});
+		}
+
+		const rangeBgmVol = document.getElementById("range-bgm-volume");
+		if (rangeBgmVol) {
+			rangeBgmVol.addEventListener("input", (e) => {
+				this.bgmPlayer.setVolume(e.target.value);
+			});
+		}
+
+		const btnRec = document.getElementById("btn-record");
+		if (btnRec) {
+			btnRec.addEventListener("click", async () => {
+				if (!this.recorder.isRecording) {
+					const bookTitle = this.currentBook ? this.currentBook.title.replace(/\.[^/.]+$/, "") : "tts_reading";
+					const pageNum = this.currentPageIndex + 1;
+					const filename = `${bookTitle}_${pageNum}장`;
+
+					const success = await this.recorder.start(filename);
+					if (success) {
+						this.updateRecordButtonUI(true);
+					}
+				} else {
+					this.recorder.stop();
+					this.updateRecordButtonUI(false);
 				}
-			} else {
-				this.recorder.stop();
-				this.updateRecordButtonUI(false);
-			}
-		});
+			});
+		}
 
 		document.getElementById("btn-prev-page").addEventListener("click", () => this.changePage(-1));
 		document.getElementById("btn-next-page").addEventListener("click", () => this.changePage(1));
 
-		document.getElementById("btn-add-bookmark").addEventListener("click", () => this.addCurrentBookmark());
-		document.getElementById("select-bookmarks").addEventListener("change", (e) => this.jumpToSelectedBookmark(e.target.value));
+		const btnAddBm = document.getElementById("btn-add-bookmark");
+		if (btnAddBm) {
+			btnAddBm.addEventListener("click", () => this.addCurrentBookmark());
+		}
 
-		document.getElementById("btn-floating-toggle").addEventListener("click", () => this.toggleSidebar(true));
-		document.getElementById("btn-close-sidebar").addEventListener("click", () => this.toggleSidebar(false));
+		const selectBm = document.getElementById("select-bookmarks");
+		if (selectBm) {
+			selectBm.addEventListener("change", (e) => this.jumpToSelectedBookmark(e.target.value));
+		}
+
+		const btnFloatToggle = document.getElementById("btn-floating-toggle");
+		if (btnFloatToggle) {
+			btnFloatToggle.addEventListener("click", () => this.toggleSidebar(true));
+		}
+
+		const btnCloseSidebar = document.getElementById("btn-close-sidebar");
+		if (btnCloseSidebar) {
+			btnCloseSidebar.addEventListener("click", () => this.toggleSidebar(false));
+		}
 
 		document.getElementById("btn-quick-theme").addEventListener("click", () => this.quickCycleTheme());
 		
@@ -367,8 +488,7 @@ window.NDS_TTS.App = class App {
 		});
 
 		document.getElementById("btn-developer").addEventListener("click", () => {
-			const githubUrl = "https://github.com/RyuKwoon";
-			window.open(githubUrl, "_blank");
+			window.open(App.GITHUB_URL, "_blank");
 		});
 		
 		document.getElementById("btn-close-modal").addEventListener("click", () => {
@@ -384,8 +504,10 @@ window.NDS_TTS.App = class App {
 				this.updatePaginationIndicator();
 				this.updatePlayerStateUI(this.ttsController.isPlaying ? 'play' : 'stop');
 				this.updateRecordButtonUI(this.recorder.isRecording);
-				this.bgmPlayer.updateCurrentTrackDisplay();
-				this.bgmPlayer.renderPlaylistUI();
+				if (this.bgmPlayer) {
+					this.bgmPlayer.updateCurrentTrackDisplay();
+					this.bgmPlayer.renderPlaylistUI();
+				}
 				this.initVoices();
 				this.reRenderOnFilterChange();
 			}
@@ -425,24 +547,27 @@ window.NDS_TTS.App = class App {
 			}
 		});
 
-		document.getElementById("btn-register-theme").addEventListener("click", () => {
-			const name = document.getElementById("input-theme-name").value.trim() || "나만의 테마";
-			const appBg = document.getElementById("input-theme-appbg").value;
-			const sideBg = document.getElementById("input-theme-sidebg").value;
-			const cardBg = document.getElementById("input-theme-cardbg").value;
-			const borderColor = document.getElementById("input-theme-bordercolor").value;
-			const highlightColor = document.getElementById("input-theme-highlightcolor").value;
-			const textColor = document.getElementById("input-theme-textcolor").value;
+		const btnRegTheme = document.getElementById("btn-register-theme");
+		if (btnRegTheme) {
+			btnRegTheme.addEventListener("click", () => {
+				const name = document.getElementById("input-theme-name").value.trim() || "나만의 테마";
+				const appBg = document.getElementById("input-theme-appbg").value;
+				const sideBg = document.getElementById("input-theme-sidebg").value;
+				const cardBg = document.getElementById("input-theme-cardbg").value;
+				const borderColor = document.getElementById("input-theme-bordercolor").value;
+				const highlightColor = document.getElementById("input-theme-highlightcolor").value;
+				const textColor = document.getElementById("input-theme-textcolor").value;
 
-			const newThemeId = this.themeManager.registerCustomTheme(name, appBg, sideBg, cardBg, borderColor, highlightColor, textColor);
-			this.populateThemeOptions();
-			document.getElementById("select-theme").value = newThemeId;
-			this.themeManager.setTheme(newThemeId);
-			localStorage.setItem("theme", newThemeId);
-			this.updateDeleteThemeButtonVisibility();
-			
-			alert(this.i18n.t("settings.themeRegisteredAlert"));
-		});
+				const newThemeId = this.themeManager.registerCustomTheme(name, appBg, sideBg, cardBg, borderColor, highlightColor, textColor);
+				this.populateThemeOptions();
+				document.getElementById("select-theme").value = newThemeId;
+				this.themeManager.setTheme(newThemeId);
+				localStorage.setItem("theme", newThemeId);
+				this.updateDeleteThemeButtonVisibility();
+				
+				alert(this.i18n.t("settings.themeRegisteredAlert"));
+			});
+		}
 
 		const btnDeleteTheme = document.getElementById("btn-delete-theme");
 		if (btnDeleteTheme) {
@@ -471,43 +596,64 @@ window.NDS_TTS.App = class App {
 			});
 		}
 
-		document.getElementById("input-eq-bgcolor").addEventListener("input", (e) => {
-			this.eqBgColor = e.target.value;
-			localStorage.setItem("eq_bgcolor", this.eqBgColor);
-			this.applyEqBgColor(this.eqBgColor);
-		});
-		document.getElementById("input-eq-color").addEventListener("input", (e) => {
-			this.eqSpectrumColor = e.target.value;
-			localStorage.setItem("eq_color", this.eqSpectrumColor);
-		});
-		document.getElementById("range-eq-thickness").addEventListener("input", (e) => {
-			this.eqThickness = parseFloat(e.target.value);
-			localStorage.setItem("eq_thickness", this.eqThickness);
-		});
-		document.getElementById("range-eq-speed").addEventListener("input", (e) => {
-			this.eqSpeed = parseInt(e.target.value);
-			localStorage.setItem("eq_speed", this.eqSpeed);
-		});
+		const inputEqBg = document.getElementById("input-eq-bgcolor");
+		if (inputEqBg) {
+			inputEqBg.addEventListener("input", (e) => {
+				this.eqBgColor = e.target.value;
+				localStorage.setItem("eq_bgcolor", this.eqBgColor);
+				this.applyEqBgColor(this.eqBgColor);
+			});
+		}
 
-		document.getElementById("select-font-family").addEventListener("change", (e) => {
-			const fontFamily = e.target.value;
-			localStorage.setItem("fontFamily", fontFamily);
-			
-			const customInput = document.getElementById("input-custom-font");
-			if (fontFamily === "custom") {
-				customInput.style.display = "inline-block";
-				this.applyFontFamily("custom", customInput.value);
-			} else {
-				customInput.style.display = "none";
-				this.applyFontFamily(fontFamily);
-			}
-		});
+		const inputEqCol = document.getElementById("input-eq-color");
+		if (inputEqCol) {
+			inputEqCol.addEventListener("input", (e) => {
+				this.eqSpectrumColor = e.target.value;
+				localStorage.setItem("eq_color", this.eqSpectrumColor);
+			});
+		}
 
-		document.getElementById("input-custom-font").addEventListener("input", (e) => {
-			const customFontName = e.target.value;
-			localStorage.setItem("customFontFamily", customFontName);
-			this.applyFontFamily("custom", customFontName);
-		});
+		const rangeEqThick = document.getElementById("range-eq-thickness");
+		if (rangeEqThick) {
+			rangeEqThick.addEventListener("input", (e) => {
+				this.eqThickness = parseFloat(e.target.value);
+				localStorage.setItem("eq_thickness", this.eqThickness);
+			});
+		}
+
+		const rangeEqSpd = document.getElementById("range-eq-speed");
+		if (rangeEqSpd) {
+			rangeEqSpd.addEventListener("input", (e) => {
+				this.eqSpeed = parseInt(e.target.value);
+				localStorage.setItem("eq_speed", this.eqSpeed);
+			});
+		}
+
+		const selectFont = document.getElementById("select-font-family");
+		if (selectFont) {
+			selectFont.addEventListener("change", (e) => {
+				const fontFamily = e.target.value;
+				localStorage.setItem("fontFamily", fontFamily);
+				
+				const customInput = document.getElementById("input-custom-font");
+				if (fontFamily === "custom" && customInput) {
+					customInput.style.display = "inline-block";
+					this.applyFontFamily("custom", customInput.value);
+				} else if (customInput) {
+					customInput.style.display = "none";
+					this.applyFontFamily(fontFamily);
+				}
+			});
+		}
+
+		const customInput = document.getElementById("input-custom-font");
+		if (customInput) {
+			customInput.addEventListener("input", (e) => {
+				const customFontName = e.target.value;
+				localStorage.setItem("customFontFamily", customFontName);
+				this.applyFontFamily("custom", customFontName);
+			});
+		}
 
 		document.getElementById("select-theme").addEventListener("change", (e) => {
 			const theme = e.target.value;
@@ -595,11 +741,14 @@ window.NDS_TTS.App = class App {
 
 	initVisualizer() {
 		this.canvas = document.getElementById("visualizer-canvas");
+		if (!this.canvas) return;
 		this.ctx = this.canvas.getContext("2d");
 
 		const resize = () => {
-			this.canvas.width = this.canvas.parentElement.clientWidth;
-			this.canvas.height = this.canvas.parentElement.clientHeight;
+			if (this.canvas && this.canvas.parentElement) {
+				this.canvas.width = this.canvas.parentElement.clientWidth;
+				this.canvas.height = this.canvas.parentElement.clientHeight;
+			}
 		};
 		window.addEventListener("resize", resize);
 		resize();
@@ -608,6 +757,7 @@ window.NDS_TTS.App = class App {
 		this.targetHeights = Array(this.visualizerBars).fill(0);
 
 		const drawLoop = (timestamp) => {
+			if (!this.canvas) return;
 			const width = this.canvas.width;
 			const height = this.canvas.height;
 			this.ctx.clearRect(0, 0, width, height);
@@ -687,6 +837,7 @@ window.NDS_TTS.App = class App {
 
 	updateVolumeIcon(volume) {
 		const icon = document.getElementById("icon-volume");
+		if (!icon) return;
 		if (volume === 0) {
 			icon.className = "bi-volume-mute-fill";
 		} else if (volume < 0.5) {
@@ -734,11 +885,11 @@ window.NDS_TTS.App = class App {
 		const sidebar = document.getElementById("sidebar");
 		const floatingBtn = document.getElementById("btn-floating-toggle");
 		if (show) {
-			sidebar.style.display = "flex";
-			floatingBtn.style.display = "none";
+			if (sidebar) sidebar.style.display = "flex";
+			if (floatingBtn) floatingBtn.style.display = "none";
 		} else {
-			sidebar.style.display = "none";
-			floatingBtn.style.display = "flex";
+			if (sidebar) sidebar.style.display = "none";
+			if (floatingBtn) floatingBtn.style.display = "flex";
 		}
 	}
 
@@ -752,6 +903,7 @@ window.NDS_TTS.App = class App {
 
 	applyFontFamily(fontFamily, customFontName = "") {
 		const contentArea = document.getElementById("reader-content");
+		if (!contentArea) return;
 		if (fontFamily === "custom") {
 			contentArea.style.fontFamily = `"${customFontName}", system-ui, -apple-system, sans-serif`;
 		} else {
@@ -759,10 +911,12 @@ window.NDS_TTS.App = class App {
 		}
 	}
 
-	playSpeech() {
+	async playSpeech() {
 		if (this.sentences.length === 0) return;
 
-		if (this.recorder.isRecording && this.recorder.isPaused) {
+		await this.requestWakeLock();
+
+		if (this.recorder && this.recorder.isRecording && this.recorder.isPaused) {
 			this.recorder.resume();
 		}
 		
@@ -774,6 +928,29 @@ window.NDS_TTS.App = class App {
 		this.ttsController.isPlaying = true;
 		this.updatePlayerStateUI('play');
 		this.speakCurrentProgress();
+	}
+
+	// [수정] 소설 터치 선택 시 모바일 화면 자동 전환 연동
+	loadBookToViewer(book) {
+		this.currentBook = book;
+		this.pages = book.chunks;
+		this.currentPageIndex = book.lastChunkIndex || 0;
+		this.currentSentenceIndex = book.lastSentenceIndex || 0;
+		
+		if (book.parentSeriesId) {
+			this.expandedSeries.add(book.parentSeriesId);
+		}
+
+		if (!this.currentBook.bookmarks) {
+			this.currentBook.bookmarks = [];
+		}
+
+		// 모바일 환경일 때 소설을 누르면 본문 화면으로 즉시 전환
+		document.body.classList.add("view-reader");
+
+		this.renderViewer();
+		this.updateBookmarkDropdown();
+		this.loadBookShelf();
 	}
 
 	renderViewer() {
@@ -862,6 +1039,27 @@ window.NDS_TTS.App = class App {
 		this.applySentenceHighlight(this.currentSentenceIndex);
 	}
 
+	updatePaginationIndicator() {
+		const indicator = document.getElementById("page-indicator");
+		if (!indicator) return;
+		const unitText = this.i18n.t("player.pageUnit");
+		indicator.textContent = `${this.currentPageIndex + 1} / ${this.pages.length} ${unitText}`;
+	}
+
+	applySentenceHighlight(index) {
+		if (index >= this.sentences.length) {
+			index = Math.max(0, this.sentences.length - 1);
+			this.currentSentenceIndex = index;
+		}
+
+		document.querySelectorAll(".sentence").forEach(el => el.classList.remove("active"));
+		const activeSpan = document.getElementById(`s-${index}`);
+		if (activeSpan) {
+			activeSpan.classList.add("active");
+			activeSpan.scrollIntoView({ behavior: "smooth", block: "center" });
+		}
+	}
+
 	speakCurrentProgress() {
 		if (!this.ttsController.isPlaying) return;
 
@@ -901,19 +1099,21 @@ window.NDS_TTS.App = class App {
 	pauseSpeech() {
 		this.ttsController.isPlaying = false;
 		this.ttsController.pause();
-		if (this.recorder.isRecording) {
+		if (this.recorder && this.recorder.isRecording) {
 			this.recorder.pause();
 		}
+		this.releaseWakeLock();
 		this.updatePlayerStateUI('pause');
 	}
 
 	stopSpeech() {
 		this.ttsController.isPlaying = false;
 		this.ttsController.stop();
-		if (this.recorder.isRecording) {
+		if (this.recorder && this.recorder.isRecording) {
 			this.recorder.stop();
 			this.updateRecordButtonUI(false);
 		}
+		this.releaseWakeLock();
 		this.currentSentenceIndex = 0;
 		this.applySentenceHighlight(0);
 		this.saveState();
@@ -1113,6 +1313,7 @@ window.NDS_TTS.App = class App {
 
 	updateBookmarkDropdown() {
 		const select = document.getElementById("select-bookmarks");
+		if (!select) return;
 		select.innerHTML = `<option value="">${this.i18n.t("player.bookmarkList")}</option>`;
 
 		if (!this.currentBook || !this.currentBook.bookmarks) return;
@@ -1142,7 +1343,8 @@ window.NDS_TTS.App = class App {
 			this.playSpeech();
 		}
 
-		document.getElementById("select-bookmarks").value = "";
+		const selectBm = document.getElementById("select-bookmarks");
+		if (selectBm) selectBm.value = "";
 	}
 
 	async exportLibraryToFile() {
@@ -1156,7 +1358,13 @@ window.NDS_TTS.App = class App {
 		if (!filename) filename = "tts_library_backup";
 		if (!filename.endsWith(".json")) filename += ".json";
 
-		const dataStr = JSON.stringify(books, null, 2);
+		const exportPayload = {
+			appVersion: App.VERSION,
+			exportDate: new Date().toISOString(),
+			data: books
+		};
+
+		const dataStr = JSON.stringify(exportPayload, null, 2);
 		const blob = new Blob([dataStr], { type: "application/json" });
 		const url = URL.createObjectURL(blob);
 		
@@ -1177,15 +1385,31 @@ window.NDS_TTS.App = class App {
 		const reader = new FileReader();
 		reader.onload = async (evt) => {
 			try {
-				const importedList = JSON.parse(evt.target.result);
-				await this.dbManager.importBooks(importedList);
+				const jsonContent = JSON.parse(evt.target.result);
+				let booksToImport = [];
+
+				if (Array.isArray(jsonContent)) {
+					booksToImport = jsonContent;
+				} else if (jsonContent.data && Array.isArray(jsonContent.data)) {
+					booksToImport = jsonContent.data;
+
+					const fileVersion = jsonContent.appVersion || "v1.0";
+					if (fileVersion > App.VERSION) {
+						const updatePrompt = `가져온 백업 파일의 버전(${fileVersion})이 현재 앱 버전(${App.VERSION})보다 상위 버전입니다.\nGitHub에서 최신 PWA 버전으로 업데이트하시겠습니까?`;
+						if (confirm(updatePrompt)) {
+							window.open(App.GITHUB_URL, "_blank");
+						}
+					}
+				}
+
+				await this.dbManager.importBooks(booksToImport);
 				
 				this.loadBookShelf();
-				if (importedList.length > 0) {
-					this.loadBookToViewer(importedList[0]);
+				if (booksToImport.length > 0) {
+					this.loadBookToViewer(booksToImport[0]);
 				}
 			} catch (error) {
-				console.error(error);
+				console.error("파일 가져오기 실패:", error);
 			} finally {
 				e.target.value = "";
 			}
@@ -1398,55 +1622,18 @@ window.NDS_TTS.App = class App {
 		this.currentSentenceIndex = 0;
 		this.sentences = [];
 		
+		document.body.classList.remove("view-reader");
+
 		const contentArea = document.getElementById("reader-content");
 		contentArea.innerHTML = `
 			<div class="reader-scroll-area">
-				<p class="empty-message"><i class="bi-book"></i> &nbsp;NDS TEXT to Speech &nbsp;<i class="bi-book"></i> <br>
+				<p class="empty-message"><i class="bi-book"></i> &nbsp;NDS TTS 모바일 &nbsp;<i class="bi-book"></i> <br>
 					<img src='NDS_TEXT_to_Speech.nds' width='60%' border='0'><br>${this.i18n.t("sidebar.emptyLibrary")}
 				</p>
 			</div>
 		`;
 		document.getElementById("page-indicator").textContent = "0 / 0";
 		this.updatePlayerStateUI('stop');
-	}
-
-	loadBookToViewer(book) {
-		this.currentBook = book;
-		this.pages = book.chunks;
-		this.currentPageIndex = book.lastChunkIndex || 0;
-		this.currentSentenceIndex = book.lastSentenceIndex || 0;
-		
-		if (book.parentSeriesId) {
-			this.expandedSeries.add(book.parentSeriesId);
-		}
-
-		if (!this.currentBook.bookmarks) {
-			this.currentBook.bookmarks = [];
-		}
-
-		this.renderViewer();
-		this.updateBookmarkDropdown();
-		this.loadBookShelf();
-	}
-
-	updatePaginationIndicator() {
-		const indicator = document.getElementById("page-indicator");
-		const unitText = this.i18n.t("player.pageUnit");
-		indicator.textContent = `${this.currentPageIndex + 1} / ${this.pages.length} ${unitText}`;
-	}
-
-	applySentenceHighlight(index) {
-		if (index >= this.sentences.length) {
-			index = Math.max(0, this.sentences.length - 1);
-			this.currentSentenceIndex = index;
-		}
-
-		document.querySelectorAll(".sentence").forEach(el => el.classList.remove("active"));
-		const activeSpan = document.getElementById(`s-${index}`);
-		if (activeSpan) {
-			activeSpan.classList.add("active");
-			activeSpan.scrollIntoView({ behavior: "smooth", block: "center" });
-		}
 	}
 
 	jumpToSentence(index) {

@@ -1,0 +1,28 @@
+/* === manifest.json 시작 === */
+{
+	"name": "NDS TTS 모바일 리더",
+	"short_name": "NDS TTS",
+	"description": "스마트폰 전용 텍스트 to 음성(TTS) 소설 리더",
+	"id": "nds-tts-mobile-app",
+	"start_url": "./index_m.html",
+	"scope": "./",
+	"display": "standalone",
+	"orientation": "portrait",
+	"background_color": "#f0f2f5",
+	"theme_color": "#3b82f6",
+	"icons": [
+		{
+			"src": "icon-192.png",
+			"sizes": "192x192",
+			"type": "image/png",
+			"purpose": "any maskable"
+		},
+		{
+			"src": "icon-512.png",
+			"sizes": "512x512",
+			"type": "image/png",
+			"purpose": "any maskable"
+		}
+	]
+}
+/* === manifest.json 끝 === */
