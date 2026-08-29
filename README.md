@@ -2,7 +2,7 @@
 
 | 📱 Mobile Version | 🖥️ PC Version | 💖 Sponsor & Support |
 | :---: | :---: | :---: |
-| [**Go to Mobile Guide**](#-1-mobile-version-v35-overview) | [**Go to PC Guide**](#-2-pc-version-v30-full-feature-specifications) | [**Support Project**](#-3-sponsor--developer-info) |
+| [**Go to Mobile Guide**](#1-mobile-version-v35-overview) | [**Go to PC Guide**](#2-pc-version-v30-full-feature-specifications) | [**Support Project**](#3-sponsor--developer-info) |
 
 ---
 
