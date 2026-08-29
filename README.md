@@ -2,7 +2,7 @@
 
 | 📱 Mobile Version | 🖥️ PC Version | 💖 Sponsor & Support |
 | :---: | :---: | :---: |
-| [**Go to Mobile Guide**](#-1-mobile-version-v35-overview) | [**Go to PC Guide**](#-2-PC-Version-v30-Full-Feature-Specifications) | [**Support Project**](#-3-sponsor--developer-info) |
+| [**Go to Mobile Guide**](#-1-mobile-version-v35-overview) | [**Go to PC Guide**](#-2-PC-Version-Feature-Specifications) | [**Support Project**](#-3-sponsor--developer-info) |
 
 ---
 
@@ -36,7 +36,7 @@
 
 ---
 
-## 🖥️ 2. PC Version (v3.0) Full Feature Specifications
+## 🖥️ 2. PC Version Feature Specifications
 
 ### 📚 Smart Bookshelf & Series Management
 - **Multi-Format Parsing:** Support for registering multiple formats at once, including TXT, Word (`.docx`), OpenDocument (`.odt`), Hangul (`.hwpx`), and PDF files.
