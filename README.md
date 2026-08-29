@@ -102,6 +102,7 @@
 <img width="40%" src="https://github.com/user-attachments/assets/ab49cf5b-96ac-40d4-bf95-9c0b1a185ddb" />
 <img width="40%" src="https://github.com/user-attachments/assets/975eb3a5-ca73-4290-ae1f-8f0479ec94e1" />
 </p>
+
 ---
 
 ## 💖 3. Sponsor & Developer Info
